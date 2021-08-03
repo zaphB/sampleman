@@ -1,0 +1,39 @@
+doctype html
+html
+  head
+    meta(name='viewport' content='width=device-width, initial-scale=1')
+    title Sample Manager
+    link(rel='stylesheet', href='/stylesheets/style.css')
+    script(src='/javascripts/utils.js')
+  body
+    script
+      | document.addEventListener("DOMContentLoaded", function(event) {
+      |   if(getCookie('img-status') == 'shown') {
+      |     showImg(#{imgCount} > 15)
+      |   }
+      |   if(getCookie('img-status') == 'hidden') {
+      |     hideImg()
+      |   }
+      |   if(getCookie('navbar-status') == 'shown') {
+      |     showNavbar()
+      |   }
+      |   if(getCookie('navbar-status') == 'hidden') {
+      |     hideNavbar()
+      |   }
+      | })
+  
+    .content#samples
+      .nested
+        block contentleft
+    .content
+      .nested
+        block contentright
+    if loggedIn
+      .navbar
+        .nested
+          block navbar
+    else
+      .navbar(style="min-width:100px")
+        .nested
+          block navbar
+

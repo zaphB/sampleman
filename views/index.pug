@@ -1,0 +1,187 @@
+extends layout
+
+block navbar
+  p.toggle-link
+    a#toggle-navbar(onclick="toggleNavbar()") [hide]
+
+  if loggedIn
+    h2 Create Sample
+    input.semiwide#sample-aim(list="aims" placeholder="Sample aim")
+    datalist#aims
+      - let aims = []
+      - for(i=0; i<samples.length; i++) {
+      -   if(aims.indexOf(samples[i].aim) < 0) {
+      -     aims.push(samples[i].aim)
+      -   }
+      - }
+      each aim in aims.sort()
+        option(value=aim)
+
+    button.semiwide(tabindex=2
+                onclick="location.href += '/create-sample?aim='+encodeURIComponent(document.getElementById('sample-aim').value)")
+      | New sample: "#{nextName}"
+
+    if detailSample
+      hr/
+      h2 Add Step
+      script
+        | var reg = /_+/g
+        |
+        | document.onkeypress = function(e) {
+        |   if(e.key == "Enter" && e.ctrlKey) {
+        |     e.preventDefault()
+        |     document.getElementById("save-step").click()
+        |   }
+        | }
+        |
+        | document.onkeydown = function(e) {
+        |   if(e.key == "Tab") {
+        |     t = document.getElementById("step-description")
+        |     m = reg.exec(t.value)
+        |     if(!m) {
+        |       reg = /_+/g
+        |       m = reg.exec(t.value)
+        |     }
+        |     if(m) {
+        |       t.focus()
+        |       e.preventDefault()
+        |       t.setSelectionRange(m.index, m.index+m[0].length);
+        |     }
+        |   }
+        | }
+      input.wide#step-name(style="font-weight:bold" placeholder="Step title" value=formName)
+      textarea#step-description(autofocus placeholder="Step description")= formDescription
+      button#save-step.wide(onclick="location.href='/"+detailSample.name+"/add-step?name='\
+            +encodeURIComponent(document.getElementById('step-name').value)\
+            +'&description='\
+            +encodeURIComponent(document.getElementById('step-description').value)") Add step
+
+      each warning in warnings
+        .alert= warning
+
+      hr/
+      h2 Load Template
+      #template-container
+        each template in templates
+          button.tempbutton(tabindex=2 onclick="location.href = '/"+detailSample.name+"/load-template?temp-name="+encodeURIComponent(template)+"'")
+            = template.replace(/^\d+\-?/g, '').replace(/\-/g, ' ').replace(/(\b\w)/gi,function(m){return m.toUpperCase();})
+
+      if detailSample.steps.length > 0
+        hr/
+        h2 Attach Files
+        iframe(name="upload-iframe", src="/"+detailSample.name+"/upload-form" onload="this.style.height=(this.contentWindow.document.body.scrollHeight+5)+'px'")
+  else
+    form(action="./" method="post")
+      input#token.wide(autofocus tabindex=3 type="password" name="token" placeholder="Token" style="margin-top:30px")
+
+
+block contentleft
+  h1 Sample List
+  - let aims = []
+  - for(i=0; i<samples.length; i++) {
+  -   if(aims.indexOf(samples[i].aim) < 0) {
+  -     aims.push(samples[i].aim)
+  -   }
+  - }
+  - aims.sort(function(aim1, aim2) {return samples.filter((s) => s.aim == aim2).length - samples.filter((s) => s.aim == aim1).length})
+  - aims = aims.slice(0,4)
+
+  p.yield-list
+    each aim in aims
+      - const goodCount = samples.filter((s) => s.isGoodSample && s.aim == aim).length
+      - const badCount = samples.filter((s) => s.isBadSample && s.aim == aim).length
+      - const procCount = samples.filter((s) => s.aim == aim).length - goodCount - badCount
+      p.yield
+        if goodCount + badCount > 0
+          | #{(aim != '...') ? aim : 'Untitled experiment'} yield: <!br />
+          | #{goodCount}/#{goodCount + badCount}
+          | (#{Number(goodCount/(goodCount+badCount) * 100).toFixed(2)}%)
+          if procCount > 0
+            | ,
+        else
+          | #{(aim != '...') ? aim : 'Untitled experiment'}: <!br />
+        if procCount > 0
+          | #{procCount}&nbsp;sample#{procCount==1?"":"s"}&nbsp;in&nbsp;processing<br />
+
+    - const goodCount = samples.filter((s) => s.isGoodSample && aims.indexOf(s.aim) == -1).length
+    - const badCount = samples.filter((s) => s.isBadSample && aims.indexOf(s.aim) == -1).length
+    - const procCount = samples.filter((s) => aims.indexOf(s.aim) == -1).length - goodCount - badCount
+    if procCount + goodCount + badCount > 0
+      p.yield
+        if goodCount + badCount > 0
+          | All other samples' yield: <!br />
+          | #{goodCount}/#{goodCount + badCount}
+          | (#{Number(goodCount/(goodCount+badCount) * 100).toFixed(2)}%)
+          if procCount > 0
+            | ,
+        else
+          | All other samples: <!br />
+        if procCount > 0
+          | #{procCount}&nbsp;sample#{procCount==1?"":"s"}&nbsp;in&nbsp;processing<br />
+
+  ul.sample-list
+    each sample in samples
+      li(style="background-color:#"+(sample.isBadSample?"fee":(sample.isGoodSample?"daffda":"fff")))
+        if sample.lastchange
+          if sample.isBadSample
+            a.sample-link.rip(href="/"+sample.name)= sample.name
+            span.rip  - #{sample.aim} [rip]
+          else if sample.isGoodSample
+            a.sample-link.good-sample(
+              href="/"+sample.name
+              style="font-size:"
+                  +(((x)=>x/(1+x))(sample.labbook.split('\n').length/500)*20+18)+"px"
+            )= sample.name
+            span  - #{sample.aim}
+          else
+            a.sample-link(
+              href="/"+sample.name
+              style="font-size:"
+                  +(((x)=>x/(1+x))(sample.labbook.split('\n').length/500)*20+18)+"px"
+            )= sample.name
+            span  - #{sample.aim}
+
+            br/
+            if sample.steps.length > 0
+              ul
+                - var i = 0
+                - toCol = (i) => {return ['555','585858','666','686868','777','787878','888','888888','999','989898','aaa','a8a8a8'][i]}
+                while i < sample.steps.length && i < 7
+                  li(style="color:#"+toCol(i)) #{sample.steps[i].timestr}: #{sample.steps[i++].title}
+                if sample.steps.length > 7
+                  li(style="color:#"+toCol(i)) ...
+            else
+              span (labbook empty)
+        else
+          span.error #{sample.name} (invalid/missing labbook)
+
+block contentright
+  div(style="width:1000px")
+  if detailSample
+    if imgCount > 0
+      p.toggle-link
+        a#toggle-img(onclick="toggleImg("+imgCount+" > 15)") [imgs]
+
+    div#labbook!= detailSample.labbook
+    div#images
+      h1 #{detailSample.name} - #{detailSample.aim}
+
+      div.imagecontainer
+        - let i = 0
+        while i < imgCount
+          div.imagetile
+            a(href='/'+detailSample.name+'/img?id='+i target='_blanc', style='max-width:inherit')
+              img(id="img_"+i, style='max-width:inherit')
+            script
+              | fetch('/#{detailSample.name}/img?path&id=#{i}').then(function(response) {
+              |   return response.text()
+              | }).then(function(text) {
+              |   document.getElementById("img_#{i}_caption").innerHTML = "./#{detailSample.name}/"+text
+              |   window.setTimeout(function() {
+              |     document.getElementById("img_#{i}").src = '/#{detailSample.name}/img?id=#{i}'
+              |   }, 5*#{i})
+              | })
+            p.imagecaption(id="img_"+(i++)+"_caption") ...
+
+  else
+    h1 Not Found

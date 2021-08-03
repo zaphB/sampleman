@@ -1,0 +1,22 @@
+doctype html
+html
+  head
+    title Sample Manager
+    link(rel='stylesheet', href='/stylesheets/style.css')
+    script(src='/javascripts/fileio.js')
+  body(style="background-color:#fff")
+    .content.flex(style="width:100%; overflow:hidden;")
+      form(action="./" method="post" enctype="multipart/form-data")
+        input.wide#file(name="file" type="file" multiple accept="*")
+        br
+        input(name="useuploadfolder" type="checkbox")
+        span(style="margin:10px") Use local upload folder instead of direct file upload
+        input.wide#stepid(name="stepid" placeholder="Identify with step ID (default: "+(detailSample.steps[0].id)+")")
+        input.wide(name="filecount" placeholder="Upload file count (local folder upload only)")
+        div(style="margin: 10px 0px 0px 0px")
+          button.semiwide(onclick="uploadFile()") Upload
+          button.semiwide(onclick="uploadAbort()") Cancel
+        if status == "success"
+          progress#progress.wide(max=1 value=1)
+        else
+          progress#progress.wide(max=1 value=0)
