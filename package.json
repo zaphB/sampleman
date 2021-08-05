@@ -19,6 +19,7 @@
   "bin": "./bin/www",
   "dependencies": {
     "cookie-parser": ">=1.4.3",
+    "deepmerge": "^4.2.2",
     "express": ">=4.15.5",
     "fs-extra": "^10.0.0",
     "marked": ">=0.3.6",
@@ -28,6 +29,7 @@
     "pug": ">=2.0.0",
     "semver-sort": "^0.0.4",
     "serve-favicon": ">=2.4.5",
-    "www": ">=0.0.0"
+    "www": ">=0.0.0",
+    "yaml": "^1.10.2"
   }
 }

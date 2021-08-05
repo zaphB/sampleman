@@ -1,20 +1,22 @@
 #!/usr/bin/env node
 
-var app = require('../scripts/app');
-var http = require('http');
-var open = require('open');
+const http = require('http');
+const open = require('open');
 
-var addr = 'localhost'
-var port = '3000';
+const app = require('../scripts/app');
+const cfg = require('../scripts/config');
+
+const host = cfg.http.host;
+const port = cfg.http.port;
 
 var retryNo = 1;
 var server = undefined;
-app.set('port', port);
 
+app.set('port', port);
 
 function tryConnect() {
   server = http.createServer(app);
-  server.listen(port, addr);
+  server.listen(port, host);
   server.on('error', onError);
   server.on('listening', onListening);
 }
@@ -26,11 +28,11 @@ function onError(error) {
   }
   switch (error.code) {
     case 'EACCES':
-      console.error(addr+':'+port+' requires elevated privileges');
+      console.error(host+':'+port+' requires elevated privileges');
       process.exit(1);
       break;
     case 'EADDRINUSE':
-      console.error(addr+':'+port+' is already in use');
+      console.error(host+':'+port+' is already in use');
       if (retryNo >= 3) {
         process.exit(1);
       }
@@ -44,8 +46,8 @@ function onError(error) {
 }
 
 function onListening() {
-  var listening = server.address();
-  console.log('listening on ' + listening.address+':'+listening.port);
-  open('http://localhost:'+listening.port)
+  var addr = server.address();
+  console.log('listening on ' + addr.address+':'+addr.port);
+  open('http://localhost:'+addr.port)
 }
 

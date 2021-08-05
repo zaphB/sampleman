@@ -2,14 +2,16 @@ const express = require('express');
 const fs = require('fs');
 const fse = require('fs-extra');
 const marked = require('marked');
-const cfg = require('../config.json');
-
 const multer = require('multer');
 const os = require('os');
-const upload = multer({dest: os.tmpdir()})
 
+const cfg = require('./config');
+
+const upload = multer({dest: os.tmpdir()})
 const router = express.Router();
-const homedir = require('os').homedir();
+
+const dbDir = expandUser(cfg.database.baseDir);
+const uploadDir = expandUser(cfg.database.uploadDir);
 
 const COOKIE_AGE_SECS = 72*60*60
 
@@ -25,7 +27,7 @@ function lpad(int, len, char="0") {
 
 function expandUser(s) {
   if(s.startsWith('~')) {
-    return s.replace('~', homedir+'/')
+    return s.replace('~', os.homedir()+'/')
   }
   return s
 }
@@ -46,10 +48,8 @@ function fmtTime(d) {
 
 function getAllSamples() {
   samples = []
-  if(!fs.existsSync(expandUser(cfg.dbDir))) {
-    fs.mkdirSync(expandUser(cfg.dbDir))
-  }
-  fs.readdirSync(expandUser(cfg.dbDir)).forEach(dir => {
+  fse.mkdirpSync(dbDir)
+  fs.readdirSync(dbDir).forEach(dir => {
     s = getSampleDetail(dir)
     if(s) {
       samples.push(s)
@@ -70,7 +70,7 @@ function getSampleDetail(name) {
   }
   s = {}
   try {
-    const text = fs.readFileSync(expandUser(cfg.dbDir)+'/'+name+'/labbook.md', 'utf8')
+    const text = fs.readFileSync(dbDir+'/'+name+'/labbook.md', 'utf8')
     let latest = -1
     let stepList = []
     const r = /^\* (\d{1,2})\.(\d{1,2})\.(\d{4}) (\d{1,2}):(\d{2})\s+-\s+(\d+)\s+-\s+(.*)$/gm
@@ -102,8 +102,8 @@ function getSampleDetail(name) {
     s.steps = stepList
     s.labbookRaw = text
     s.labbook = marked(text)
-    s.isGoodSample = fs.existsSync(expandUser(cfg.dbDir)+'/'+name+'/good-sample')
-    s.isBadSample = fs.existsSync(expandUser(cfg.dbDir)+'/'+name+'/bad-sample')
+    s.isGoodSample = fs.existsSync(dbDir+'/'+name+'/good-sample')
+    s.isBadSample = fs.existsSync(dbDir+'/'+name+'/bad-sample')
   }
   catch(err) {
     //console.log(err)
@@ -121,25 +121,23 @@ function getNextSampleName() {
   samples = getAllSamples()
   try {
     i = 0
-    r = RegExp(escapeRegExp(cfg.samplePrefix)+'(\\d+)')
+    r = RegExp(escapeRegExp(cfg.database.samplePrefix)+'(\\d+)')
     do {
       m = r.exec(samples[i++].name)
     } while(!m);
   }
   catch(err) {
     //console.log(err)
-    return cfg.samplePrefix+"001"
+    return cfg.database.samplePrefix+"001"
   }
-  return cfg.samplePrefix+lpad(Number(m[1])+1, 3)
+  return cfg.database.samplePrefix+lpad(Number(m[1])+1, 3)
 }
 
 function getAllTemplates() {
   let templates = []
-  let dir = expandUser(cfg.dbDir)+'/templates'
-  if (!fs.existsSync(dir)){
-    fs.mkdirSync(dir);
-  }
-  fs.readdirSync(dir).forEach(file => {
+  let dir = dbDir+'/templates'
+  fse.mkdirpSync(dbDir+'/templates');
+  fs.readdirSync(dbDir+'/templates').forEach(file => {
     if(file.endsWith(".txt")) {
       templates.push(file.split('.')[0])
     }
@@ -150,7 +148,7 @@ function getAllTemplates() {
 function getTemplate(name) {
   templates = []
   try {
-    text = fs.readFileSync(expandUser(cfg.dbDir)+'/templates/'+name+'.txt', 'utf8').split('\n')
+    text = fs.readFileSync(dbDir+'/templates/'+name+'.txt', 'utf8').split('\n')
     if(text.length == 1) {
       text[1] = ""
     }
@@ -223,7 +221,7 @@ router.post("/*", function(req, res, next) {
 
 router.get("/*", function(req, res, next) {
   loggedIn = false
-  if (!cfg.accessToken || req.cookies.token == cfg.accessToken) {
+  if (!cfg.http.accessToken || req.cookies.token == cfg.http.accessToken) {
     res.cookie('token', req.cookies.token, { maxAge: COOKIE_AGE_SECS*1e3, httpOnly: true })
     loggedIn = true
   }
@@ -236,12 +234,12 @@ router.get('/:detailSample/:step', function(req, res, next) {
   switch(req.params.step) {
   case "create-sample":
     newName = getNextSampleName()
-    fs.mkdirSync(expandUser(cfg.dbDir)+'/'+newName);
+    fse.mkdirpSync(dbDir+'/'+newName);
     let aim = req.param('aim').trim()
     if(aim != '') {
       aim = ' - '+aim
     }
-    fs.writeFileSync(expandUser(cfg.dbDir)+'/'+newName+'/labbook.md', newName+aim+'\n'+Array(aim.length+10).join("=")+'\n\n');
+    fs.writeFileSync(dbDir+'/'+newName+'/labbook.md', newName+aim+'\n'+Array(aim.length+10).join("=")+'\n\n');
     res.redirect("/"+newName)
     next = function() {}
     break;
@@ -277,7 +275,7 @@ router.get('/:detailSample/:step', function(req, res, next) {
     if(sample.steps.length > 0) {
       nextId = sample.steps[0].id + 1
     }
-    text = "* "+fmtDate()+' '+fmtTime()+' - '+lpad(nextId, cfg.stepIdLen)+' - '+name+'\n'+description+'\n'
+    text = "* "+fmtDate()+' '+fmtTime()+' - '+lpad(nextId, cfg.database.stepIdLen)+' - '+name+'\n'+description+'\n'
     m = /.*\n={3,}\n\n/m.exec(s)
     if(!m) {
       warnings.push("Invalid labbook, cannot save.")
@@ -285,7 +283,7 @@ router.get('/:detailSample/:step', function(req, res, next) {
     }
     pos = m.index + m[0].length
     newLabbook = s.substr(0,pos) + text + s.substr(pos)
-    fs.writeFileSync(expandUser(cfg.dbDir)+'/'+req.params.detailSample+'/labbook.md', newLabbook)
+    fs.writeFileSync(dbDir+'/'+req.params.detailSample+'/labbook.md', newLabbook)
     res.redirect("/"+req.params.detailSample)
     next = function() {}
 
@@ -312,10 +310,10 @@ router.get('/:detailSample/:step', function(req, res, next) {
 
   case "img":
     imgNum = (Number(req.param('id')) || Number(0)).toFixed(0)
-    imgs = find(expandUser(cfg.dbDir)+'/'+req.params.detailSample, ['jpg', 'jpeg', 'png'])
+    imgs = find(dbDir+'/'+req.params.detailSample, ['jpg', 'jpeg', 'png'])
     if(imgNum < imgs.length) {
       if(req.param('path') != undefined) {
-        res.status(200).send(imgs[imgNum].replace(expandUser(cfg.dbDir)+'/'+req.params.detailSample, '').slice(1))
+        res.status(200).send(imgs[imgNum].replace(dbDir+'/'+req.params.detailSample, '').slice(1))
       }
       else {
         res.sendFile(imgs[imgNum])
@@ -333,7 +331,7 @@ router.get('/:detailSample/:step', function(req, res, next) {
 router.get('/:detailSample*', function(req, res, next) {
   
   // make sure updload folder exists
-  fse.mkdirpSync(expandUser(cfg.uploadDir))
+  fse.mkdirpSync(uploadDir)
   
   // in case of heartbeat just exit without rendering anything
   if (req.params.detailSample == 'heartbeat') {
@@ -350,7 +348,7 @@ router.get('/:detailSample*', function(req, res, next) {
       'templates': getAllTemplates(),
       'warnings': warnings,
       'loggedIn': loggedIn,
-      'imgCount': find(expandUser(cfg.dbDir)+'/'+req.params.detailSample, 
+      'imgCount': find(dbDir+'/'+req.params.detailSample, 
                        ['jpg', 'jpeg', 'png']).length
     });
   }
@@ -374,7 +372,7 @@ router.post('/:detailSample/',
   ups = req.files.file
   if(ups || req.body.useuploadfolder) {
 
-    basePath = expandUser(cfg.dbDir)+"/"+req.params.detailSample
+    basePath = dbDir+"/"+req.params.detailSample
     stepid = req.body.stepid
 
     detail = getSampleDetail(req.params.detailSample)
@@ -382,7 +380,7 @@ router.post('/:detailSample/',
       stepid = detail.steps[0].id
     }
 
-    dir = fileOrDirExists(basePath, RegExp("^"+lpad(stepid, cfg.stepIdLen)+".*$"))
+    dir = fileOrDirExists(basePath, RegExp("^"+lpad(stepid, cfg.databasegstepIdLen)+".*$"))
     if(!dir) {
       step = detail.steps.find(function(t) {return t.id == Number(stepid)})
       w = step.title.split(" ")
@@ -394,7 +392,7 @@ router.post('/:detailSample/',
           shortTitle = w[i].toLowerCase()
         }
       }
-      dir = lpad(stepid, cfg.stepIdLen) + "-" + shortTitle
+      dir = lpad(stepid, cfg.database.stepIdLen) + "-" + shortTitle
     }
     try {
       fs.mkdirSync(basePath+"/"+dir)
@@ -418,9 +416,9 @@ router.post('/:detailSample/',
       if(!count) {
         count = 255
       } 
-      files = fs.readdirSync(expandUser(cfg.uploadDir)+"/").sort()
+      files = fs.readdirSync(uploadDir+"/").sort()
       for(i=0; i<files.length && i<count; i++) {
-        fse.moveSync(expandUser(cfg.uploadDir)+"/"+files[i], basePath+"/"+dir+"/"+files[i])
+        fse.moveSync(uploadDir+"/"+files[i], basePath+"/"+dir+"/"+files[i])
       }
     }
   }
