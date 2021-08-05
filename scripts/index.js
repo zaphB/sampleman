@@ -203,6 +203,13 @@ function find(startPath, suffixes) {
 
 let warnings = []
 let loggedIn = false
+let lastHeartbeat = Date.now()+30000
+
+setInterval(function() {
+  if (Date.now()-lastHeartbeat > 10000) { 
+    process.exit()
+  }
+}, 3000)
 
 router.post("/*", function(req, res, next) {
   loggedIn = false
@@ -324,19 +331,29 @@ router.get('/:detailSample/:step', function(req, res, next) {
 });
 
 router.get('/:detailSample*', function(req, res, next) {
+  
+  // make sure updload folder exists
   fse.mkdirpSync(expandUser(cfg.uploadDir))
   
-  res.render('index', {
-    'samples': getAllSamples(),
-    'detailSample': getSampleDetail(req.params.detailSample),
-    'nextName': getNextSampleName(),
-    'formName': req.param('name'),
-    'formDescription': req.param('description'),
-    'templates': getAllTemplates(),
-    'warnings': warnings,
-    'loggedIn': loggedIn,
-    'imgCount': find(expandUser(cfg.dbDir)+'/'+req.params.detailSample, ['jpg', 'jpeg', 'png']).length
-  });
+  // in case of heartbeat just exit without rendering anything
+  if (req.params.detailSample == 'heartbeat') {
+    lastHeartbeat = Date.now()
+    res.render('heartbeat')
+  }
+  else {
+    res.render('index', {
+      'samples': getAllSamples(),
+      'detailSample': getSampleDetail(req.params.detailSample),
+      'nextName': getNextSampleName(),
+      'formName': req.param('name'),
+      'formDescription': req.param('description'),
+      'templates': getAllTemplates(),
+      'warnings': warnings,
+      'loggedIn': loggedIn,
+      'imgCount': find(expandUser(cfg.dbDir)+'/'+req.params.detailSample, 
+                       ['jpg', 'jpeg', 'png']).length
+    });
+  }
   warnings = []
 });
 

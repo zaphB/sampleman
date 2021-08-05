@@ -6,18 +6,24 @@ var open = require('open');
 
 var addr = 'localhost'
 var port = '3000';
+
+var retryNo = 1;
+var server = undefined;
 app.set('port', port);
 
-var server = http.createServer(app);
-server.listen(port, addr);
-server.on('error', onError);
-server.on('listening', onListening);
+
+function tryConnect() {
+  server = http.createServer(app);
+  server.listen(port, addr);
+  server.on('error', onError);
+  server.on('listening', onListening);
+}
+tryConnect()
 
 function onError(error) {
   if (error.syscall !== 'listen') {
     throw error;
   }
-
   switch (error.code) {
     case 'EACCES':
       console.error(addr+':'+port+' requires elevated privileges');
@@ -25,7 +31,12 @@ function onError(error) {
       break;
     case 'EADDRINUSE':
       console.error(addr+':'+port+' is already in use');
-      process.exit(1);
+      if (retryNo >= 3) {
+        process.exit(1);
+      }
+      console.error('sleeping a while and retrying...');
+      retryNo++;
+      setTimeout(tryConnect, 5000)      
       break;
     default:
       throw error;
