@@ -1,5 +1,6 @@
 const express = require('express');
 const fs = require('fs');
+const fse = require('fs-extra');
 const marked = require('marked');
 const cfg = require('../config.json');
 
@@ -323,6 +324,8 @@ router.get('/:detailSample/:step', function(req, res, next) {
 });
 
 router.get('/:detailSample*', function(req, res, next) {
+  fse.mkdirpSync(expandUser(cfg.uploadDir))
+  
   res.render('index', {
     'samples': getAllSamples(),
     'detailSample': getSampleDetail(req.params.detailSample),
@@ -385,7 +388,7 @@ router.post('/:detailSample/',
       for(i=0; i<ups.length; i++) {
         name = ups[i].originalname
         try {
-          fs.renameSync(ups[i].path, basePath+"/"+dir+"/"+name)
+          fse.moveSync(ups[i].path, basePath+"/"+dir+"/"+name)
         }
         catch(e) {
           console.log(e)
@@ -394,28 +397,13 @@ router.post('/:detailSample/',
       }
     }
     else {
-      count = Number(req.body.filecount)
-      if(count) {
-        files = fs.readdirSync(expandUser(cfg.uploadDir)+"/").sort()
-        for(i=0; i<files.length && i<count; i++) {
-          fs.rename(expandUser(cfg.uploadDir)+"/"+files[i], basePath+"/"+dir+"/"+files[i])
-        }
-      }
-      else {
-        try {
-          fs.renameSync(expandUser(cfg.uploadDir)+"/", basePath+"/"+dir)
-        }
-        catch(e) {
-          console.log(e)
-          warnings.push("Failed to upload from uploads folder.")
-        }
-        try {
-          fs.mkdirSync(expandUser(cfg.uploadDir))
-        }
-        catch(e) {
-          console.log(e)
-          warnings.push("Failed to upload from uploads folder.")
-        }
+      let count = Number(req.body.filecount)
+      if(!count) {
+        count = 255
+      } 
+      files = fs.readdirSync(expandUser(cfg.uploadDir)+"/").sort()
+      for(i=0; i<files.length && i<count; i++) {
+        fse.moveSync(expandUser(cfg.uploadDir)+"/"+files[i], basePath+"/"+dir+"/"+files[i])
       }
     }
   }
