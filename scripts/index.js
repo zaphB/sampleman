@@ -4,7 +4,8 @@ const marked = require('marked');
 const cfg = require('../config.json');
 
 const multer = require('multer');
-const upload = multer({dest: '.sampleman-uploads/'})
+const os = require('os');
+const upload = multer({dest: os.tmpdir()})
 
 const router = express.Router();
 const homedir = require('os').homedir();
