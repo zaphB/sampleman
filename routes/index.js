@@ -2,11 +2,11 @@ const express = require('express');
 const fs = require('fs');
 const marked = require('marked');
 const cfg = require('../config.json');
+
 const multer = require('multer');
+const upload = multer({dest: '.sampleman-uploads/'})
 
-const upload = multer({dest: 'uploads/'})
 const router = express.Router();
-
 const homedir = require('os').homedir();
 
 const COOKIE_AGE_SECS = 72*60*60
