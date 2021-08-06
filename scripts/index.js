@@ -10,10 +10,12 @@ const cfg = require('./config');
 const upload = multer({dest: os.tmpdir()})
 const router = express.Router();
 
-const dbDir = expandUser(cfg.database.baseDir);
-const uploadDir = expandUser(cfg.database.uploadDir);
+const BASE_PATH = __dirname.startsWith('/snapshot') ? path.dirname(process.execPath) : __dirname+'/../'
+const dbDir = makeAbsolutePath(cfg.database.baseDir);
+const uploadDir = makeAbsolutePath(cfg.database.uploadDir);
 
 const COOKIE_AGE_SECS = 72*60*60
+const LABBOOK_FILENAME = 'labbook.md'
 
 function lpad(int, len, char="0") {
   res = String(int)
@@ -25,11 +27,14 @@ function lpad(int, len, char="0") {
   return res
 }
 
-function expandUser(s) {
+function makeAbsolutePath(s) {
   if(s.startsWith('~')) {
     return s.replace('~', os.homedir()+'/')
   }
-  return s
+  if(!path.isAbsolute(s)) {
+    s = path.join(BASE_PATH, s)
+  }
+  return path.normalize(s)
 }
 
 function fmtDate(d) {
@@ -48,29 +53,41 @@ function fmtTime(d) {
 
 function getAllSamples() {
   samples = []
-  fse.mkdirpSync(dbDir)
-  fs.readdirSync(dbDir).forEach(dir => {
-    s = getSampleDetail(dir)
-    if(s) {
-      samples.push(s)
-    }
-  })
-  samples.sort(function (s1, s2) {
-    if (s2.creation != s1.creation) {
-      return s2.creation - s1.creation
-    }
-    return ('' + s2.name.toLowerCase()).localeCompare(s1.name.toLowerCase())
-  })
+  if(fs.existsSync(dbDir)) {
+    fs.readdirSync(dbDir).forEach(dir => {
+      s = getSampleDetail(dir)
+      if(s) {
+        samples.push(s)
+      }
+    })
+    samples.sort(function (s1, s2) {
+      if (s2.creation != s1.creation) {
+        return s2.creation - s1.creation
+      }
+      return ('' + s2.name.toLowerCase()).localeCompare(s1.name.toLowerCase())
+    })
+  }
   return samples
 }
 
 function getSampleDetail(name) {
-  if(name == 'none') {
+  if(    !fs.existsSync(path.join(dbDir, name))
+      || !fs.lstatSync(path.join(dbDir, name)).isDirectory()
+      || name.startsWith('.')
+      || name == 'none'
+      || name == 'templates')
+  {
     return false
   }
-  s = {}
+
+  const labbookPath = path.join(dbDir, name, LABBOOK_FILENAME)
+  if(!fs.existsSync(labbookPath)) {
+    fs.writeFileSync(labbookPath, name+'\n'+Array(name.length+1).join("=")+'\n\n')
+  }
+
+  let s = {}
   try {
-    const text = fs.readFileSync(dbDir+'/'+name+'/labbook.md', 'utf8')
+    const text = fs.readFileSync(labbookPath, 'utf8')
     let latest = -1
     let stepList = []
     const r = /^\* (\d{1,2})\.(\d{1,2})\.(\d{4}) (\d{1,2}):(\d{2})\s+-\s+(\d+)\s+-\s+(.*)$/gm
@@ -102,11 +119,11 @@ function getSampleDetail(name) {
     s.steps = stepList
     s.labbookRaw = text
     s.labbook = marked(text)
-    s.isGoodSample = fs.existsSync(dbDir+'/'+name+'/good-sample')
-    s.isBadSample = fs.existsSync(dbDir+'/'+name+'/bad-sample')
+    s.isGoodSample = fs.existsSync(path.join(dbDir, name, 'good-sample'))
+    s.isBadSample = fs.existsSync(path.join(dbDir, name, 'bad-sample'))
   }
   catch(err) {
-    //console.log(err)
+    console.log(err)
     return false
   }
   return s
@@ -123,11 +140,13 @@ function getNextSampleName() {
     i = 0
     r = RegExp(escapeRegExp(cfg.database.samplePrefix)+'(\\d+)')
     do {
-      m = r.exec(samples[i++].name)
-    } while(!m);
+      m = r.exec(samples[i] && samples[i++].name)
+    } while(!m && i<samples.length);
   }
   catch(err) {
-    //console.log(err)
+    console.log(err)
+  }
+  if (!m) {
     return cfg.database.samplePrefix+"001"
   }
   return cfg.database.samplePrefix+lpad(Number(m[1])+1, 3)
@@ -135,13 +154,14 @@ function getNextSampleName() {
 
 function getAllTemplates() {
   let templates = []
-  let dir = dbDir+'/templates'
-  fse.mkdirpSync(dbDir+'/templates');
-  fs.readdirSync(dbDir+'/templates').forEach(file => {
-    if(file.endsWith(".txt")) {
-      templates.push(file.split('.')[0])
-    }
-  })
+  const dir = path.join(dbDir, 'templates')
+  if(fs.existsSync(dir)) {
+    fs.readdirSync(dir).forEach(file => {
+      if(file.endsWith(".txt")) {
+        templates.push(file.split('.')[0])
+      }
+    })
+  }
   return templates
 }
 
@@ -176,7 +196,17 @@ function fileOrDirExists(path, regex) {
   return m[0]?m[0][0]:false
 }
 
-function find(startPath, suffixes) {
+function findImgs(detailSample) {
+  return _find(path.join(dbDir, detailSample),
+               ['jpg', 'jpeg', 'png'], true)
+}
+
+function hasImgs(detailSample) {
+  return _find(path.join(dbDir, detailSample),
+               ['jpg', 'jpeg', 'png'], false).length > 0
+}
+
+function _find(startPath, suffixes, findAll) {
   if (!fs.existsSync(startPath)) {
     return []
   }
@@ -185,18 +215,41 @@ function find(startPath, suffixes) {
   for(let i=0; i<files.length; i++) {
     const filename = startPath + '/' + files[i]
     if (fs.lstatSync(filename).isDirectory()){
-      result.push(...find(filename, suffixes))
+      result.push(..._find(filename, suffixes, findAll))
+      if (!findAll && result.length > 0) {
+        return result
+      }
     }
     else {
       for(let j=0; j<suffixes.length; j++) {
         if(filename.toLowerCase().endsWith('.'+suffixes[j])) {
           result.push(filename)
+          if (!findAll && result.length > 0) {
+            return result
+          }
           break
         }
       }
     }
   }
   return result
+}
+
+function makeNonExistingPath(path) {
+  let spath = path.split('.')
+  let start = spath[0]
+  let end = ''
+  if (spath.length > 1) {
+    start = spath.slice(0, spath.length-1)
+    end = '.'+spath[spath.length-1]
+  }
+  let suff = ''
+  let i = 0
+  while (fs.existsSync(start+suff+end)) {
+    i++;
+    suff = '-'+i
+  }
+  return start+suff+end
 }
 
 let warnings = []
@@ -236,12 +289,15 @@ router.get('/:detailSample/:step', function(req, res, next) {
   switch(req.params.step) {
   case "create-sample":
     newName = getNextSampleName()
-    fse.mkdirpSync(dbDir+'/'+newName);
+    fse.mkdirpSync(path.join(dbDir, newName));
     let aim = req.query.aim.trim()
     if(aim != '') {
       aim = ' - '+aim
     }
-    fs.writeFileSync(dbDir+'/'+newName+'/labbook.md', newName+aim+'\n'+Array(aim.length+10).join("=")+'\n\n');
+    fs.writeFileSync(path.join(dbDir, newName, LABBOOK_FILENAME),
+                     newName + aim + '\n'
+                      + Array(newName.length+aim.length+1).join("=")
+                      + '\n\n');
     res.redirect("/"+newName)
     next = function() {}
     break;
@@ -312,7 +368,7 @@ router.get('/:detailSample/:step', function(req, res, next) {
 
   case "img":
     imgNum = (Number(req.query.id) || Number(0)).toFixed(0)
-    imgs = find(dbDir+'/'+req.params.detailSample, ['jpg', 'jpeg', 'png'])
+    imgs = findImgs(req.params.detailSample)
     if(imgNum < imgs.length) {
       if(req.query.path != undefined) {
         res.status(200).send(imgs[imgNum].replace(dbDir+'/'+req.params.detailSample, '').slice(1))
@@ -332,8 +388,11 @@ router.get('/:detailSample/:step', function(req, res, next) {
 
 router.get('/:detailSample*', function(req, res, next) {
 
-  // make sure updload folder exists
-  fse.mkdirpSync(uploadDir)
+  // make sure upload folder exists if database
+  // was already created
+  if(fs.existsSync(dbDir) && uploadDir) {
+    fse.mkdirpSync(uploadDir)
+  }
 
   // in case of heartbeat just exit without rendering anything
   if (req.params.detailSample == 'heartbeat') {
@@ -350,8 +409,7 @@ router.get('/:detailSample*', function(req, res, next) {
       'templates': getAllTemplates(),
       'warnings': warnings,
       'loggedIn': loggedIn,
-      'imgCount': find(dbDir+'/'+req.params.detailSample,
-                       ['jpg', 'jpeg', 'png']).length
+      'imgCount': findImgs(req.params.detailSample).length
     });
   }
   warnings = []
@@ -371,10 +429,11 @@ router.post('/:detailSample/',
             upload.fields([{ name: 'file', maxCount: 24 }]),
             function(req, res, next) {
 
-  ups = req.files.file
+  const ups = req.files.file
+  const imgCountBefore = findImgs(req.params.detailSample).length
   if(ups || req.body.useuploadfolder) {
 
-    basePath = dbDir+"/"+req.params.detailSample
+    basePath = path.join(dbDir, req.params.detailSample)
     stepid = req.body.stepid
 
     detail = getSampleDetail(req.params.detailSample)
@@ -403,12 +462,13 @@ router.post('/:detailSample/',
 
     if(ups) {
       for(i=0; i<ups.length; i++) {
-        name = ups[i].originalname
+        const name = ups[i].originalname
+        const tarPath = makeNonExistingPath(path.join(basePath, dir, name))
         try {
-          fse.moveSync(ups[i].path, basePath+"/"+dir+"/"+name)
+          fse.moveSync(ups[i].path, tarPath)
         }
-        catch(e) {
-          console.log(e)
+        catch(err) {
+          console.log(err)
           warnings.push("Failed to upload '"+name+"'")
         }
       }
@@ -418,14 +478,24 @@ router.post('/:detailSample/',
       if(!count) {
         count = 255
       }
-      files = fs.readdirSync(uploadDir+"/").sort()
-      for(i=0; i<files.length && i<count; i++) {
-        fse.moveSync(uploadDir+"/"+files[i], basePath+"/"+dir+"/"+files[i])
+      if(uploadDir) {
+        fse.mkdirpSync(uploadDir)
+        files = fs.readdirSync(uploadDir).sort()
+        for(i=0; i<files.length && i<count; i++) {
+          const tarPath = makeNonExistingPath(path.join(basePath, dir, files[i]))
+          fse.moveSync(path.join(uploadDir, files[i]), tarPath)
+        }
+      }
+      else {
+        warnings.push("database.updloadDir in the configuration file is not set.")
       }
     }
   }
+  const imgCountNow = findImgs(req.params.detailSample).length
   res.render('form', {
     'detailSample': getSampleDetail(req.params.detailSample),
+    'triggerRefresh': warnings.length > 0
+                        || (imgCountBefore != imgCountNow),
     'status': 'success'
   })
 })

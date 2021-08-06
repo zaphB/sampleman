@@ -6,6 +6,10 @@ html
     script(src='/javascripts/fileio.js')
   body(style="background-color:#fff")
     .content.flex(style="width:100%; overflow:hidden;")
+      script
+        | if (#{triggerRefresh}) {
+        |   window.top.location.reload(true);
+        | }
       form(action="./" method="post" enctype="multipart/form-data")
         input.wide#file(name="file" type="file" multiple accept="*")
         br

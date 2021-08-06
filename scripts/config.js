@@ -5,11 +5,11 @@ YAML = require('yaml')
 deepmerge = require('deepmerge')
 
 const BASE_PATH = __dirname.startsWith('/snapshot') ? path.dirname(process.execPath) : __dirname+'/../'
-const CONFIG_PATH = path.join(BASE_PATH, 'sampleman-config.txt');
+const CONFIG_PATH = path.join(BASE_PATH, 'sampleman.config.txt');
 const DEFAULT_CFG = {
   "database": {
     "baseDir": "~/Documents/samples",
-    "uploadDir": "~/Documents/sampleman-uploads",
+    "uploadDir": "",
     "samplePrefix": "XYZ",
     "stepIdLen": 3
   },
