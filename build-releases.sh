@@ -53,7 +53,7 @@ for target in "linux-x64" "win-x64" "macos-x64" "macos-arm64"; do
   echo "> using prebuilt node v$latest"
 
   mkdir -p releases/
-  outname="SampleMan-$sampleManVersion-$target-node$latest"
+  outname="sampleman-$sampleManVersion-$target-node$latest"
   pkg . --targets "node$latest-$target" \
         --output "releases/$outname" \
           | grep -i "error!"
