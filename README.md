@@ -107,17 +107,17 @@ section:
 All available configuration sections and keys, as well as their default values and description are listed in the following table.
 
 | config section | config key | default value | description |
-| :---- | :---- | :---- | :---- | :---- |
-| `database` | `baseDir` | `~/Documents/samples` | Base path of the sample database. The `~` symbol is replaced with the current user's home directory. Relative paths are interpreted relative to the executable's path.
-| | `uploadDir` | `""`     | Directory from which files are grabbed, if attaching files with the "use local upload folder"-option. The `~` symbol is replaced with the current user's home directory. Relative paths are interpreted relative to the executable's path.
-| | `samplePrefix` | `XYZ` | Prefix for sample IDs. With the prefix `XYZ` the sample folders will be called `XYZ001`, `XYZ002`, `XYZ003`, etc.
-| | `stepIdLen` | 3 | Length of the step ID. With the default step ID length 3, the attachments folder for step number 7 will be be called `007-stepname/`. This ensures equivalence of alphabetical and numerical order for up to 999 steps.
-||
-| `app` | `autoQuit` | `true` | If true, quit sampleman if all browser tabs are closed. If false, keep the sampleman process running forever. The latter is useful if you enable sampleman to auto start on boot, which allows you to open sampleman at any time by visiting the sampleman URL, e.g. `localhost:3000`, in your browser.
-||
-| `http` | `accessToken` | `""` | If set to a nonempty value, sampleman will require you to enter this token before granting write access to your database through the browser. Caution: this token is not a password, it is stored as clear text and can be easily stolen with a little criminal energy. Only use to prevent accidental database modifications.
-| | `public` | `false`   | If false, sampleman is only available on the machine that runs it. If true, sampleman is available on all machines that can reach your machine through the network, which is typically your home or company network. The URL shown in the browser can thus be entered on any machine in the network in this case. In case you have problems finding sampleman from other machines, make sure that you use URLs that start with `http://...` and *not* `https://...` and that your router or company firewall allows communication between network members.
-| | `port` | `3000` | HTTP port to listen on.
+| :------------- | :--------- | :------------ | :---------- | 
+| `database` | `baseDir` | `~/Documents/samples` | Base path of the sample database. The `~` symbol is replaced with the current user's home directory. Relative paths are interpreted relative to the executable's path. |
+| | `uploadDir` | `""`     | Directory from which files are grabbed, if attaching files with the "use local upload folder"-option. The `~` symbol is replaced with the current user's home directory. Relative paths are interpreted relative to the executable's path. |
+| | `samplePrefix` | `XYZ` | Prefix for sample IDs. With the prefix `XYZ` the sample folders will be called `XYZ001`, `XYZ002`, `XYZ003`, etc. |
+| | `stepIdLen` | 3 | Length of the step ID. With the default step ID length 3, the attachments folder for step number 7 will be be called `007-stepname/`. This ensures equivalence of alphabetical and numerical order for up to 999 steps. |
+|   |   |    |   |   |
+| `app` | `autoQuit` | `true` | If true, quit sampleman if all browser tabs are closed. If false, keep the sampleman process running forever. The latter is useful if you enable sampleman to auto start on boot, which allows you to open sampleman at any time by visiting the sampleman URL, e.g. `localhost:3000`, in your browser. "
+|   |   |    |   |   |
+| `http` | `accessToken` | `""` | If set to a nonempty value, sampleman will require you to enter this token before granting write access to your database through the browser. Caution: this token is not a password, it is stored as clear text and can be easily stolen with a little criminal energy. Only use to prevent accidental database modifications.  
+| | `public` | `false`   | If false, sampleman is only available on the machine that runs it. If true, sampleman is available on all machines that can reach your machine through the network, which is typically your home or company network. The URL shown in the browser can thus be entered on any machine in the network in this case. In case you have problems finding sampleman from other machines, make sure that you use URLs that start with `http://...` and *not* `https://...` and that your router or company firewall allows communication between network members. |
+| | `port` | `3000` | HTTP port to listen on. |
 
 
 ### Attaching Files to a Step
