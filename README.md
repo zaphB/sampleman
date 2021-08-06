@@ -46,7 +46,7 @@ The `baseDir` specifies the path, where sampleman will create your sample databa
 
 The `samplePrefix` specifies the prefix that all your sample IDs will get. If it is `ABC`, the sample folders will be named `ABC001`, `ABC002`, etc.
 
-Save your changes to `sampleman.config.txt` and launch sampleman again. Your configuration should now be in effect.
+Save your changes to `sampleman.config.txt` and launch sampleman again. Your configuration should now be in effect. For a full description of all configuration keys, see the [advanced configuration](#advanced-configuration) section.
 
 
 ### Creating Your First Sample
