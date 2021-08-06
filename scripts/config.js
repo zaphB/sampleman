@@ -13,6 +13,9 @@ const DEFAULT_CFG = {
     "samplePrefix": "XYZ",
     "stepIdLen": 3
   },
+  "app": {
+    "autoQuit": true
+  },
   "http": {
     "accessToken": "",
     "host": "localhost",

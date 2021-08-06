@@ -203,11 +203,13 @@ let warnings = []
 let loggedIn = false
 let lastHeartbeat = Date.now()+30000
 
-setInterval(function() {
-  if (Date.now()-lastHeartbeat > 10000) { 
-    process.exit()
-  }
-}, 3000)
+if(cfg.app.autoQuit) {
+  setInterval(function() {
+    if (Date.now()-lastHeartbeat > 10000) { 
+      process.exit()
+    }
+  }, 3000)
+}
 
 router.post("/*", function(req, res, next) {
   loggedIn = false
