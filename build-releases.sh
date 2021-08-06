@@ -44,7 +44,7 @@ for target in "linux-x64" "win-x64" "macos-x64" "macos-arm64"; do
   echo "begin building target $target..."
 
   # check latest nodejs prebuilt binary version
-  npm install semver-sort >/dev/null 2>&1
+  npm install --no-save semver-sort >/dev/null 2>&1
   echo "const s = require('semver-sort'); \
         console.log(s.desc(process.argv.slice(2))[0])" >.tmp-script.js
   latest="$(node .tmp-script.js $(curl "https://github.com/vercel/pkg-fetch/releases" 2>/dev/null \
