@@ -94,6 +94,25 @@ The filename should end with `.txt`, and it is recommended not to use spaces. Th
 Click it to fill in the "step title" and "step description" fields with the template content. Use the "tab" key to select the placeholders in the step description and enter the desired values. After tabbing through and replacing all placeholders, either press the "add step" button or use "ctrl+enter" to save the step.
 
 
+### Attaching Files to a Step
+
+Next, we want to add some additional files to this step entry. In practice this could be microscopy images or measurement results for example. To add any file, we need the "attach files" section in the bottom right:
+
+<kbd><img width="500" src="https://github.com/zaphB/sampleman/blob/master/screenshots/attach-files.jpg?raw=true"></kbd>
+
+There are two possible sources to upload a file from: Directly selecting files via the "choose files" button, or from the local upload folder, which is the directory specified as `updloadDir` in `config.json`. Checking the "Use local upload folder instead of direct file upload"-checkbox selects the second option, leaving it unchecked uses files selected with the "choose files" dialog.
+
+In the "Identify with step ID"-input, you can optionally enter a step ID to identify the selected files with. If this input remains empty, the files are identified with the latest step.
+
+In the "Upload file count"-input, you can enter a number to limit the amount of files selected from the local upload folder. If left free, all files contained in the local upload folder are used. This setting is ignored if the "choose files" dialog is used as a source for files.
+
+The uploaded files are added to a folder corresponding to the step. The folder is automatically created if it does not exist. The folder name must begin with the step ID, the rest of the name can be changed at will. By default, the folder name is created from the longest word in the step title.
+
+Attached image files in the `jpg` or `png` formats are displayed in the sample gallery in chronological order. The labbook/gallery view can be toggled with the `[imgs]`/`[labbook]` links that appear if there are images attached to a sample:
+
+<kbd><img width="500" src="https://github.com/zaphB/sampleman/blob/master/screenshots/gallery.jpg?raw=true"></kbd>
+
+
 ## Advanced Configuration
 
 The config file is stored in [YAML](https://yaml.org/) syntax. Sections are grouped by indentation, and key-value pairs are separated by colons:
@@ -119,24 +138,6 @@ All available configuration sections and keys, as well as their default values a
 | | `public` | `false`   | If false, sampleman is only available on the machine that runs it. If true, sampleman is available on all machines that can reach your machine through the network, which is typically your home or company network. The URL shown in the browser can thus be entered on any machine in the network in this case. In case you have problems finding sampleman from other machines, make sure that you use URLs that start with `http://...` and *not* `https://...` and that your router or company firewall allows communication between network members. |
 | | `port` | `3000` | HTTP port to listen on. |
 
-
-### Attaching Files to a Step
-
-Next, we want to add some additional files to this step entry. In practice this could be microscopy images or measurement results for example. To add any file, we need the "attach files" section in the bottom right:
-
-<kbd><img width="500" src="https://github.com/zaphB/sampleman/blob/master/screenshots/attach-files.jpg?raw=true"></kbd>
-
-There are two possible sources to upload a file from: Directly selecting files via the "choose files" button, or from the local upload folder, which is the directory specified as `updloadDir` in `config.json`. Checking the "Use local upload folder instead of direct file upload"-checkbox selects the second option, leaving it unchecked uses files selected with the "choose files" dialog.
-
-In the "Identify with step ID"-input, you can optionally enter a step ID to identify the selected files with. If this input remains empty, the files are identified with the latest step.
-
-In the "Upload file count"-input, you can enter a number to limit the amount of files selected from the local upload folder. If left free, all files contained in the local upload folder are used. This setting is ignored if the "choose files" dialog is used as a source for files.
-
-The uploaded files are added to a folder corresponding to the step. The folder is automatically created if it does not exist. The folder name must begin with the step ID, the rest of the name can be changed at will. By default, the folder name is created from the longest word in the step title.
-
-Attached image files in the `jpg` or `png` formats are displayed in the sample gallery in chronological order. The labbook/gallery view can be toggled with the `[imgs]`/`[labbook]` links that appear if there are images attached to a sample:
-
-<kbd><img width="500" src="https://github.com/zaphB/sampleman/blob/master/screenshots/gallery.jpg?raw=true"></kbd>
 
 
 ## Running From Source
