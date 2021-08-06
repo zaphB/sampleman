@@ -18,7 +18,7 @@ const DEFAULT_CFG = {
   },
   "http": {
     "accessToken": "",
-    "host": "localhost",
+    "public": false,
     "port": 3000
   }
 }
@@ -46,4 +46,3 @@ fse.mkdirpSync(path.dirname(CONFIG_PATH))
 fs.writeFileSync(CONFIG_PATH, YAML.stringify(config, 'utf8'))
 
 module.exports = config
-

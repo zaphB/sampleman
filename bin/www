@@ -2,18 +2,38 @@
 
 const http = require('http');
 const open = require('open');
+const os = require('os');
 
 const app = require('../scripts/app');
 const cfg = require('../scripts/config');
 
-const host = cfg.http.host;
+const host = cfg.http.public ? '::' : 'localhost';
 const port = cfg.http.port;
+app.set('port', port);
 
 var retryNo = 1;
 var server = undefined;
 
-app.set('port', port);
+// find local IP
+let ipv4 = false;
+let ipv6 = false;
+if(cfg.http.public) {
+  const nets = os.networkInterfaces();
+  for (const name of Object.keys(nets)) {
+    for (const net of nets[name]) {
+      if (!net.internal) {
+        if (net.family.toLowerCase() == 'ipv4') {
+          ipv4 = net.address
+        }
+        else if (net.family.toLowerCase() == 'ipv6') {
+          ipv6 = net.address
+        }
+      }
+    }
+  }
+}
 
+// try to create server and start listing
 function tryConnect() {
   server = http.createServer(app);
   server.listen(port, host);
@@ -22,6 +42,7 @@ function tryConnect() {
 }
 tryConnect()
 
+// handle errors
 function onError(error) {
   if (error.syscall !== 'listen') {
     throw error;
@@ -38,16 +59,33 @@ function onError(error) {
       }
       console.error('sleeping a while and retrying...');
       retryNo++;
-      setTimeout(tryConnect, 5000)      
+      setTimeout(tryConnect, 5000)
       break;
     default:
       throw error;
   }
 }
 
+// on success print address and open browser
 function onListening() {
   var addr = server.address();
   console.log('listening on ' + addr.address+':'+addr.port);
-  open('http://localhost:'+addr.port)
-}
 
+  // select address to use for links, prefer IPv4 address
+  // over IPv6 (user friendly links), default to localhost
+  let openAddr = 'localhost'
+  if (cfg.http.public) {
+    if(ipv4) {
+      console.log('detected local IPv4 address '+ipv4)
+      openAddr = ipv4
+    }
+    else if(ipv6) {
+      console.log('detected local IPv6 address '+ipv6)
+      openAddr = ipv6
+    }
+    else {
+      console.log('failed to detect local IP address, defaulting to localhost')
+    }
+  }
+  open('http://'+openAddr+':'+addr.port)
+}
