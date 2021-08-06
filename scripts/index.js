@@ -205,7 +205,7 @@ let lastHeartbeat = Date.now()+30000
 
 if(cfg.app.autoQuit) {
   setInterval(function() {
-    if (Date.now()-lastHeartbeat > 10000) { 
+    if (Date.now()-lastHeartbeat > 10000) {
       process.exit()
     }
   }, 3000)
@@ -237,7 +237,7 @@ router.get('/:detailSample/:step', function(req, res, next) {
   case "create-sample":
     newName = getNextSampleName()
     fse.mkdirpSync(dbDir+'/'+newName);
-    let aim = req.param('aim').trim()
+    let aim = req.query.aim.trim()
     if(aim != '') {
       aim = ' - '+aim
     }
@@ -248,8 +248,8 @@ router.get('/:detailSample/:step', function(req, res, next) {
 
   case "add-step":
     args = req.params.step.split("?")[1]
-    name = req.param('name').trim()
-    description = req.param('description').trim()
+    name = req.query.name.trim()
+    description = req.query.description.trim()
     if(description.length > 0) {
       description = "\n" + description
       reg = /\s*\n+(\s*)/g
@@ -266,7 +266,7 @@ router.get('/:detailSample/:step', function(req, res, next) {
       warnings.push("Step name must have at least 3 characters")
       break;
     }
-    if(req.param('description').match(/_/)) {
+    if(req.query.description.match(/_/)) {
       warnings.push("Please fill in all placeholders in step description.")
       break;
     }
@@ -290,7 +290,7 @@ router.get('/:detailSample/:step', function(req, res, next) {
     next = function() {}
 
   case "load-template":
-    t = getTemplate(req.param('temp-name'))
+    t = getTemplate(req.query['temp-name'])
     if(t.name) {
       res.redirect("/"+req.params.detailSample
           +'?name='+encodeURIComponent(t.name)
@@ -299,7 +299,7 @@ router.get('/:detailSample/:step', function(req, res, next) {
     }
 
   case "import-files":
-    stepid = Number(req.param('stepid'))
+    stepid = Number(req.query.stepid)
     break
 
   case "upload-form":
@@ -311,10 +311,10 @@ router.get('/:detailSample/:step', function(req, res, next) {
     break;
 
   case "img":
-    imgNum = (Number(req.param('id')) || Number(0)).toFixed(0)
+    imgNum = (Number(req.query.id) || Number(0)).toFixed(0)
     imgs = find(dbDir+'/'+req.params.detailSample, ['jpg', 'jpeg', 'png'])
     if(imgNum < imgs.length) {
-      if(req.param('path') != undefined) {
+      if(req.query.path != undefined) {
         res.status(200).send(imgs[imgNum].replace(dbDir+'/'+req.params.detailSample, '').slice(1))
       }
       else {
@@ -331,10 +331,10 @@ router.get('/:detailSample/:step', function(req, res, next) {
 });
 
 router.get('/:detailSample*', function(req, res, next) {
-  
+
   // make sure updload folder exists
   fse.mkdirpSync(uploadDir)
-  
+
   // in case of heartbeat just exit without rendering anything
   if (req.params.detailSample == 'heartbeat') {
     lastHeartbeat = Date.now()
@@ -345,12 +345,12 @@ router.get('/:detailSample*', function(req, res, next) {
       'samples': getAllSamples(),
       'detailSample': getSampleDetail(req.params.detailSample),
       'nextName': getNextSampleName(),
-      'formName': req.param('name'),
-      'formDescription': req.param('description'),
+      'formName': req.query.name,
+      'formDescription': req.query.description,
       'templates': getAllTemplates(),
       'warnings': warnings,
       'loggedIn': loggedIn,
-      'imgCount': find(dbDir+'/'+req.params.detailSample, 
+      'imgCount': find(dbDir+'/'+req.params.detailSample,
                        ['jpg', 'jpeg', 'png']).length
     });
   }
@@ -417,7 +417,7 @@ router.post('/:detailSample/',
       let count = Number(req.body.filecount)
       if(!count) {
         count = 255
-      } 
+      }
       files = fs.readdirSync(uploadDir+"/").sort()
       for(i=0; i<files.length && i<count; i++) {
         fse.moveSync(uploadDir+"/"+files[i], basePath+"/"+dir+"/"+files[i])
