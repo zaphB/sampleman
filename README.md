@@ -24,9 +24,11 @@ In case you have any questions/remarks/wishes, feel free to contact me or open a
 
 ## Installation & Running
 
-Download the executable of the [latest release](https://github.com/zaphB/sampleman/releases/latest) for your platform. Place the executable in a path that seems reasonable to you and run it. A browser window should open showing the sampleman frontend.
+Download the executable of the [latest release](https://github.com/zaphB/sampleman/releases/latest) for your platform. Place the executable in a path that seems reasonable to you and run it. A browser window should open showing the sampleman frontend. 
 
-The executable for your platform is missing? Then see how to run from source in the "[for developers](#for-developers)" section at the bottom of this readme, or contact me to add your platform to the list.
+*Having trouble executing?* On a linux machine, make sure the downloaded file has the "execute" permission flag set (usually found in "right-click menu" -> "properties"). On newer MacOs machines it may be very tricky to run the executable, because of the strict code-signing requirements. Maybe it is worth trying to [run from source](#running-from-source).
+
+*The executable for your platform is missing?* Then see how to [run sampleman from the source](#running-from-source)" at the bottom of this readme, or contact me to have your platform to the list.
 
 
 ### Quick Configuration
@@ -137,8 +139,8 @@ Attached image files in the `jpg` or `png` formats are displayed in the sample g
 <kbd><img width="500" src="https://github.com/zaphB/sampleman/blob/master/screenshots/gallery.jpg?raw=true"></kbd>
 
 
-## For developers
+## Running From Source
 
-If you wish to make changes in the code, you need to run sampleman from source.
+To run sampleman from the source code, make sure that `node` and `npm` are installed on your system. Open up a shell and run `node --version` and `npm --version`, both should run without an error. Then, clone this repository and run `sampleman.sh` to start sampleman from source.
 
-Make sure `node` and `npm` are installed on your system. Open up a shell and run `node --version` and `npm --version`, both should run without an error. Then, run `sampleman.sh` to start sampleman from source. Any changes in the `views/` and `public/` folders are effective after a refresh in the browser, changes in `bin/` and `scripts/` require stopping and restarting `sampleman.sh`. Standalone executables for common platforms can be built with the `build-releases.sh` script.
+Any changes in the `views/` and `public/` folders are effective after a refresh in the browser, changes in `bin/` and `scripts/` require stopping and restarting `sampleman.sh`. Standalone executables for common platforms can be built with the `build-releases.sh` script.
