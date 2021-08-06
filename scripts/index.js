@@ -254,14 +254,14 @@ function makeNonExistingPath(path) {
 
 let warnings = []
 let loggedIn = false
-let lastHeartbeat = Date.now()+30000
+let lastHeartbeat = Date.now()+10000
 
 if(cfg.app.autoQuit) {
   setInterval(function() {
-    if (Date.now()-lastHeartbeat > 10000) {
+    if (Date.now()-lastHeartbeat > 5000) {
       process.exit()
     }
-  }, 3000)
+  }, 2000)
 }
 
 router.post("/*", function(req, res, next) {
