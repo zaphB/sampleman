@@ -17,14 +17,14 @@ samples
           \ microscopy.jpg
 ```
 
-Manually editing any of the files in the database is of course possible and the sampleman frontend will display the changes immediately. Just make sure you do not change sample and step IDs, because sampleman needs these to parse the database.
+Manually editing any of the files in the database is of course possible and the sampleman front-end will display the changes immediately. Just make sure you do not change sample and step IDs, because sampleman needs these to parse the database.
 
 In case you have any questions/remarks/wishes, feel free to contact me or open an issue.
 
 
 ## Installation & Running
 
-Download the executable of the [latest release](https://github.com/zaphB/sampleman/releases/latest) for your platform. Place the executable in a path that seems reasonable to you and run it. A browser window should open showing the sampleman frontend. 
+Download the binaries of the [latest release](https://github.com/zaphB/sampleman/releases/latest) for your platform. Unpack the archive if needed and place the executable in a path that seems reasonable to you. This path should be writable for your user account, because the configuration file will be created there. Run the executable. A browser window should open, showing the sampleman front-end.
 
 *Having trouble executing?* On a linux machine, make sure the downloaded file has the "execute" permission flag set (usually found in "right-click menu" -> "properties"). On newer MacOs machines it may be very tricky to run the executable, because of the strict code-signing requirements. Maybe it is worth trying to [run from source](#running-from-source).
 
@@ -87,7 +87,7 @@ Let sample dry for ___mins
 Inspect sample surface: __________
 ```
 
-The filename should end with `.txt`, and it is recommended not to use spaces. The templates are listed in alphabetical order of their filenames, a leading number can thus be used to achieve a custom sorting. In this example, the filename `01-cleaning.txt` is chosen. After creating the file, reload the sampleman frontend in the browser. A new button should appear in the "Load Template" section:
+The filename should end with `.txt`, and it is recommended not to use spaces. The templates are listed in alphabetical order of their filenames, a leading number can thus be used to achieve a custom sorting. In this example, the filename `01-cleaning.txt` is chosen. After creating the file, reload the sampleman front-end in the browser. A new button should appear in the "Load Template" section:
 
 <kbd><img width="300" src="https://github.com/zaphB/sampleman/blob/master/screenshots/first-template.jpg?raw=true"></kbd>
 
@@ -126,7 +126,7 @@ section:
 All available configuration sections and keys, as well as their default values and description are listed in the following table.
 
 | config section | config key | default value | description |
-| :------------- | :--------- | :------------ | :---------- | 
+| :------------- | :--------- | :------------ | :---------- |
 | `database` | `baseDir` | `~/Documents/samples` | Base path of the sample database. The `~` symbol is replaced with the current user's home directory. Relative paths are interpreted relative to the executable's path. |
 | | `uploadDir` | `""`     | Directory from which files are grabbed, if attaching files with the "use local upload folder"-option. The `~` symbol is replaced with the current user's home directory. Relative paths are interpreted relative to the executable's path. |
 | | `samplePrefix` | `XYZ` | Prefix for sample IDs. With the prefix `XYZ` the sample folders will be called `XYZ001`, `XYZ002`, `XYZ003`, etc. |

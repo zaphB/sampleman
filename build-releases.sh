@@ -3,45 +3,52 @@
 # change dir to this script's location
 cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
 
-# check if repo is clean or need commit
-git update-index --refresh >/dev/null 2>&1
-if git diff-index --quiet HEAD --; then
-  sleep 0
-else
-  echo "uncommitted changes exist in repo, please commit everything before building."
-  exit 2
-fi
-
 if ! command -v mkfs.hfsplus >/dev/null 2>/dev/null; then
   echo "mkfs.hfsplus not found on your path"
   exit 3
 fi
 
+if ! command -v tar >/dev/null 2>/dev/null; then
+  echo "tar not found on your path"
+  exit 4
+fi
+
 # install latest pkg version
 echo installing latest version of pkg bundler
-sudo npm install --global pkg 
+sudo npm install --global pkg
 echo '------------------------------------------------------'
-echo 
+echo
 
 # check if pkg binary is available
 if ! command -v pkg >/dev/null 2>&1; then
   echo "pkg bundler not found on your PATH."
   exit 1
-fi 
+fi
 
 # find current sampleman version from git tags
 sampleManVersion="$(git tag --points-at "$(git branch --show-current)" | grep '^v')"
 installedNodeVersion="$(node --version | grep -oP '\d+\.\d+\.\d+')"
 if [[ "$sampleManVersion" == "" ]]; then
-  echo "current commit is not tagged as a release, building as 'interim'"
-  sampleManVersion='interim'
+
+  # check if repo is clean or need commit
+  git update-index --refresh >/dev/null 2>&1
+  if git diff-index --quiet HEAD --; then
+    sampleManVersion="$(git rev-parse --short HEAD)"
+    echo "current commit is not tagged as a release,"
+    echo "> building as commit$sampleManVersion"
+  else
+    sampleManVersion="snapshot"
+    echo "uncommitted changes exist in repo, building"
+    echo "> as $sampleManVersion."
+  fi
+
 else
   echo "BUILDING SAMPLEMAN $sampleManVersion RELEASES"
 fi
 echo "> node --version is v$(node --version | grep -oP '\d+\.\d+\.\d+')"
 echo
 
-# build targets 
+# build targets
 #for target in "linux-x64" "win10-x64" "win7-x64" "macos-x64" "macos-arm64"; do
 for target in "linux-x64" "win10-x64" "macos-x64" "macos-arm64"; do
 
@@ -76,21 +83,41 @@ for target in "linux-x64" "win10-x64" "macos-x64" "macos-arm64"; do
         --output "releases/$outname" \
           | grep -i "error!"
   if [[ "${PIPESTATUS[0]}" == "0" ]]; then
-    created="$created\n> $outname"
+    created="$created $outname"
     echo "> done."
-  else 
+  else
     echo "> failed."
   fi
   echo
 done
 
-# store macos build in dmg containers
-echo "stuffing macos builds into .dmg containers..."
+echo "stuffing linux builds into .tar.gz archives to preserve "
+echo "> executable rights after download..."
+echo
+for f in $(ls "releases"); do
+  if [[ "$(echo "$f" | cut -d'-' -f3)" == "linux" ]] && [[ "${f: -7}" != ".tar.gz" ]]; then
+    echo "begin packing $f..."
+    cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")" \
+      && cd "releases/" \
+      && tar -czf "$f.tar.gz" "$f" \
+      && rm "$f" \
+      && cd ..
+    if [[ -e "releases/$f" ]]; then
+      echo "> failed."
+    else
+      echo "> done."
+    fi
+  fi
+done
+cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
+
+echo "stuffing macos builds into .dmg containers to preserve"
+echo "> executable rights after download..."
 echo
 
 mkdir -p "mnt"
 for f in $(ls "releases"); do
-  if [[ "$(echo "$f" | cut -d'-' -f3)" == "macos" ]] && [[ "${f: -3}" != "dmg" ]]; then
+  if [[ "$(echo "$f" | cut -d'-' -f3)" == "macos" ]] && [[ "${f: -4}" != ".dmg" ]]; then
     echo "begin packing $f..."
     dd if=/dev/zero of="releases/$f.dmg" bs=1M count=$(expr $(du -BM "releases/$f" | grep -oP '^\d+') + 3) >/dev/null 2>&1 \
       && mkfs.hfsplus -v sampleman "releases/$f.dmg" >/dev/null \
@@ -112,6 +139,8 @@ rmdir "mnt"
 if [[ "$created" == "" ]]; then
   echo "no binaries were created."
 else
-  echo -e "created $(echo -e "$created" | sed '/^\s*$/d' | wc -l) binaries in ./releases/: $created"
+  echo "created $(echo -e "$created" | sed '/^\s*$/d' | wc -l) binaries in ./releases/:"
+  for cr in $created; do
+    echo "> $(ls "releases/" | grep -F "$cr")"
+  done
 fi
-
