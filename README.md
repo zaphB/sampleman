@@ -22,7 +22,7 @@ Manually editing any of the files in the database is of course possible and the 
 In case you have any questions/remarks/wishes, feel free to contact me or open an issue.
 
 
-## Installation & Running
+# Installation & Running
 
 Download the binaries of the [latest release](https://github.com/zaphB/sampleman/releases/latest) for your platform. Unpack the archive if needed and place the executable in a path that seems reasonable to you. This path should be writable for your user account, because the configuration file will be created there. Run the executable. A browser window should open, showing the sampleman front-end.
 
@@ -31,7 +31,7 @@ Download the binaries of the [latest release](https://github.com/zaphB/sampleman
 *The executable for your platform is missing?* Then see how to [run sampleman from the source](#running-from-source)" at the bottom of this readme, or contact me to have your platform to the list.
 
 
-### Quick Configuration
+## Quick Configuration
 
 Upon starting the file `sampleman.config.txt` is created in the location you placed the executable. To customize your configuration, close sampleman in the browser and open the `sampleman.config.txt` with a text editor of your choice.
 
@@ -62,7 +62,7 @@ Instead of `XYZ` this should show your configured prefix. In the sample aim fiel
 The left coloumn shows the overview of all your created samples, which is only one sample so far. The sample names are clickable to open the samples labbook. The central column shows the current sample's labbook, which lists all steps done in chronological order, with the oldest step on the bottom. The labbook should currently be empty. The right column allows to add entries to the labbook.
 
 
-### Adding a Step to a Sample
+## Adding a Step to a Sample
 
 Enter an "step title" and "step description" and hit "add step". Every line in the "step description" field results in a bullet point in the labbook. If you indent lines in the "step description" field  with spaces, you can create different levels in the bullet point list.
 
@@ -73,7 +73,7 @@ In this example, I created the following first step:
 As you can see, the date, time and an step ID (001 here) are automatically added.
 
 
-### Using Templates
+## Using Templates
 
 Entering title and description manually every time you add a step is cumbersome. Because you usually do the same or similar step with many samples, templates with placeholders are very helpful to speed things up. For this, create a plain-text file in the `templates` folder within your `dbDir` folder.
 
@@ -94,7 +94,7 @@ The filename should end with `.txt`, and it is recommended not to use spaces. Th
 Click it to fill in the "step title" and "step description" fields with the template content. Use the "tab" key to select the placeholders in the step description and enter the desired values. After tabbing through and replacing all placeholders, either press the "add step" button or use "ctrl+enter" to save the step.
 
 
-### Attaching Files to a Step
+## Attaching Files to a Step
 
 Next, we want to add some additional files to this step entry. In practice this could be microscopy images or measurement results for example. To add any file, we need the "attach files" section in the bottom right:
 
@@ -113,7 +113,7 @@ Attached image files in the `jpg` or `png` formats are displayed in the sample g
 <kbd><img width="500" src="https://github.com/zaphB/sampleman/blob/master/screenshots/gallery.jpg?raw=true"></kbd>
 
 
-## Advanced Configuration
+# Advanced Configuration
 
 The config file is stored in [YAML](https://yaml.org/) syntax. Sections are grouped by indentation, and key-value pairs are separated by colons:
 ```yaml
@@ -123,7 +123,9 @@ section:
   ...
 ```
 
-All available configuration sections and keys, as well as their default values and description are listed in the following table.
+If you delete or rename the config file, sampleman creates a new config file with the default values. If sampleman fails to parse the config file, the config file is renamed and a new config file with the default settings is created.
+
+All available configuration sections and keys, as well as their default values and descriptions are listed in the following table:
 
 | config section | config key | default value | description |
 | :------------- | :--------- | :------------ | :---------- |
@@ -139,8 +141,7 @@ All available configuration sections and keys, as well as their default values a
 | | `port` | `3000` | HTTP port to listen on. |
 
 
-
-## Running From Source
+# Running From Source
 
 To run sampleman from the source code, make sure that `node` and `npm` are installed on your system. Open up a shell and run `node --version` and `npm --version`, both should run without an error. Then, clone this repository and run `sampleman.sh` to start sampleman from source.
 
