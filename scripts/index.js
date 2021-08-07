@@ -10,31 +10,20 @@ const cfg = require('./config');
 const upload = multer({dest: os.tmpdir()})
 const router = express.Router();
 
-const BASE_PATH = __dirname.startsWith('/snapshot') ? path.dirname(process.execPath) : __dirname+'/../'
-const dbDir = makeAbsolutePath(cfg.database.baseDir);
-const uploadDir = makeAbsolutePath(cfg.database.uploadDir);
+const dbDir = cfg.absolutePath(cfg.database.baseDir);
+const uploadDir = cfg.absolutePath(cfg.database.uploadDir);
 
 const COOKIE_AGE_SECS = 72*60*60
 const LABBOOK_FILENAME = 'labbook.md'
 
 function lpad(int, len, char="0") {
   res = String(int)
-  for(i=1; i<len; i++) {
+  for(let i=1; i<len; i++) {
     if(int < Math.pow(10, i)) {
       res = char + res
     }
   }
   return res
-}
-
-function makeAbsolutePath(s) {
-  if(s.startsWith('~')) {
-    return s.replace('~', os.homedir()+'/')
-  }
-  if(!path.isAbsolute(s)) {
-    s = path.join(BASE_PATH, s)
-  }
-  return path.normalize(s)
 }
 
 function fmtDate(d) {
@@ -461,7 +450,7 @@ router.post('/:detailSample/',
     catch (e) {}
 
     if(ups) {
-      for(i=0; i<ups.length; i++) {
+      for(let i=0; i<ups.length; i++) {
         const name = ups[i].originalname
         const tarPath = makeNonExistingPath(path.join(basePath, dir, name))
         try {
@@ -481,7 +470,7 @@ router.post('/:detailSample/',
       if(uploadDir) {
         fse.mkdirpSync(uploadDir)
         files = fs.readdirSync(uploadDir).sort()
-        for(i=0; i<files.length && i<count; i++) {
+        for(let i=0; i<files.length && i<count; i++) {
           const tarPath = makeNonExistingPath(path.join(basePath, dir, files[i]))
           fse.moveSync(path.join(uploadDir, files[i]), tarPath)
         }

@@ -34,12 +34,10 @@ if [[ "$sampleManVersion" == "" ]]; then
   git update-index --refresh >/dev/null 2>&1
   if git diff-index --quiet HEAD --; then
     sampleManVersion="$(git rev-parse --short HEAD)"
-    echo "current commit is not tagged as a release,"
-    echo "> building as commit$sampleManVersion"
+    echo "current commit is not tagged as a release, building as commit$sampleManVersion"
   else
     sampleManVersion="snapshot"
-    echo "uncommitted changes exist in repo, building"
-    echo "> as $sampleManVersion."
+    echo "uncommitted changes exist in repo, building as $sampleManVersion"
   fi
 
 else
@@ -49,8 +47,7 @@ echo "> node --version is v$(node --version | grep -oP '\d+\.\d+\.\d+')"
 echo
 
 # build targets
-#for target in "linux-x64" "win10-x64" "win7-x64" "macos-x64" "macos-arm64"; do
-for target in "linux-x64" "win10-x64" "macos-x64" "macos-arm64"; do
+for target in "linux-x64" "win10-x64" "win7-x64" "macos-x64" "macos-arm64"; do
 
   echo "begin building target $target..."
 
@@ -141,6 +138,6 @@ if [[ "$created" == "" ]]; then
 else
   echo "created $(echo -e "$created" | sed '/^\s*$/d' | wc -l) binaries in ./releases/:"
   for cr in $created; do
-    echo "> $(ls "releases/" | grep -F "$cr")"
+    echo "> $(ls releases/ | grep -F $cr)"
   done
 fi
