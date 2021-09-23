@@ -15,6 +15,7 @@ const uploadDir = cfg.absolutePath(cfg.database.uploadDir);
 
 const COOKIE_AGE_SECS = 72*60*60
 const LABBOOK_FILENAME = 'labbook.md'
+const IMG_FORMATS = ['jpg', 'jpeg', 'png', 'gif']
 
 function lpad(int, len, char="0") {
   res = String(int)
@@ -59,7 +60,13 @@ function getAllSamples() {
   return samples
 }
 
+function sanitize(string) {
+  return string.replace(/[^a-z0-9-_.]+/gmi, '_')
+}
+
 function getSampleDetail(name) {
+  name = sanitize(name)
+
   if(    !fs.existsSync(path.join(dbDir, name))
       || !fs.lstatSync(path.join(dbDir, name)).isDirectory()
       || name.startsWith('.')
@@ -136,9 +143,9 @@ function getNextSampleName() {
     console.log(err)
   }
   if (!m) {
-    return cfg.database.samplePrefix+"001"
+    return sanitize(cfg.database.samplePrefix+"001")
   }
-  return cfg.database.samplePrefix+lpad(Number(m[1])+1, 3)
+  return sanitize(cfg.database.samplePrefix+lpad(Number(m[1])+1, 3))
 }
 
 function getAllTemplates() {
@@ -146,7 +153,7 @@ function getAllTemplates() {
   const dir = path.join(dbDir, 'templates')
   if(fs.existsSync(dir)) {
     fs.readdirSync(dir).forEach(file => {
-      if(file.endsWith(".txt")) {
+      if(file.endsWith(".txt") && sanitize(file) == file) {
         templates.push(file.split('.')[0])
       }
     })
@@ -155,6 +162,7 @@ function getAllTemplates() {
 }
 
 function getTemplate(name) {
+  name = sanitize(name)
   templates = []
   try {
     text = fs.readFileSync(dbDir+'/templates/'+name+'.txt', 'utf8').split('\n')
@@ -186,13 +194,13 @@ function fileOrDirExists(path, regex) {
 }
 
 function findImgs(detailSample) {
-  return _find(path.join(dbDir, detailSample),
-               ['jpg', 'jpeg', 'png'], true)
+  detailSample = sanitize(detailSample)
+  return _find(path.join(dbDir, detailSample), IMG_FORMATS, true)
 }
 
 function hasImgs(detailSample) {
-  return _find(path.join(dbDir, detailSample),
-               ['jpg', 'jpeg', 'png'], false).length > 0
+  detailSample = sanitize(detailSample)
+  return _find(path.join(dbDir, detailSample), IMG_FORMATS, false).length > 0
 }
 
 function _find(startPath, suffixes, findAll) {
@@ -330,14 +338,15 @@ router.get('/:detailSample/:step', function(req, res, next) {
     }
     pos = m.index + m[0].length
     newLabbook = s.substr(0,pos) + text + s.substr(pos)
-    fs.writeFileSync(dbDir+'/'+req.params.detailSample+'/labbook.md', newLabbook)
-    res.redirect("/"+req.params.detailSample)
+    fs.writeFileSync(dbDir+'/'+sanitize(req.params.detailSample)+'/labbook.md',
+                     newLabbook)
+    res.redirect("/"+sanitize(req.params.detailSample))
     next = function() {}
 
   case "load-template":
     t = getTemplate(req.query['temp-name'])
     if(t.name) {
-      res.redirect("/"+req.params.detailSample
+      res.redirect("/"+sanitize(req.params.detailSample)
           +'?name='+encodeURIComponent(t.name)
           +'&description='+encodeURIComponent(t.description))
       next = function() {}
@@ -407,7 +416,7 @@ router.get('/:detailSample*', function(req, res, next) {
 router.get('/', function(req, res, next) {
   s = getAllSamples()
   if(s.length > 0) {
-    res.redirect('/'+s[0].name)
+    res.redirect('/'+sanitize(s[0].name))
   }
   else {
     res.redirect('/none')
@@ -422,7 +431,7 @@ router.post('/:detailSample/',
   const imgCountBefore = findImgs(req.params.detailSample).length
   if(ups || req.body.useuploadfolder) {
 
-    basePath = path.join(dbDir, req.params.detailSample)
+    basePath = path.join(dbDir, sanitize(req.params.detailSample))
     stepid = req.body.stepid
 
     detail = getSampleDetail(req.params.detailSample)
@@ -442,7 +451,7 @@ router.post('/:detailSample/',
           shortTitle = w[i].toLowerCase()
         }
       }
-      dir = lpad(stepid, cfg.database.stepIdLen) + "-" + shortTitle
+      dir = sanitize(lpad(stepid, cfg.database.stepIdLen) + "-" + shortTitle)
     }
     try {
       fs.mkdirSync(basePath+"/"+dir)

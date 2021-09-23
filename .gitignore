@@ -14,3 +14,4 @@ uploads
 build
 releases
 sampleman.config.txt*
+test-*
