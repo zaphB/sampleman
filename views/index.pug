@@ -51,8 +51,11 @@ block navbar
         | }
       input.wide#step-name(style="font-weight:bold" placeholder="Step title" value=formName)
       textarea#step-description(autofocus placeholder="Step description")= formDescription
+      input.wide#step-date(placeholder="Step time (default: now)" value=formDate)
       button#save-step.wide(onclick="location.href='/"+detailSample.name+"/add-step?name='\
             +encodeURIComponent(document.getElementById('step-name').value)\
+            +'&date='\
+            +encodeURIComponent(document.getElementById('step-date').value)\
             +'&description='\
             +encodeURIComponent(document.getElementById('step-description').value)") Add step
 

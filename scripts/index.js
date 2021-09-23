@@ -28,15 +28,21 @@ function lpad(int, len, char="0") {
 }
 
 function fmtDate(d) {
-  if(d==undefined) {
+  if(!d) {
     d = new Date(Date.now())
+  }
+  else {
+    d = new Date(d)
   }
   return lpad(d.getDate(), 2)+'.'+lpad(d.getMonth()+1, 2)+'.'+d.getFullYear()
 }
 
 function fmtTime(d) {
-  if(d==undefined) {
+  if(!d) {
     d = new Date(Date.now())
+  }
+  else {
+    d = new Date(d)
   }
   return lpad(d.getHours(), 2)+':'+lpad(d.getMinutes(), 2)
 }
@@ -61,6 +67,9 @@ function getAllSamples() {
 }
 
 function sanitize(string) {
+  if(!string) {
+    return string
+  }
   return string.replace(/[^a-z0-9-_.]+/gmi, '_')
 }
 
@@ -94,7 +103,7 @@ function getSampleDetail(name) {
       if(timestamp > latest) {
         latest = timestamp
       }
-      stepList.push({'id':id, 'title':step, 'timestamp':timestamp, 'timestr':fmtDate(new Date(timestamp))})
+      stepList.push({'id':id, 'title':step, 'timestamp':timestamp, 'timestr':fmtDate(timestamp)})
     }
     s.name = name
     m = text.split('\n')[0].match(/[^-]-(.*)/)
@@ -110,8 +119,8 @@ function getSampleDetail(name) {
     else {
       s.creation = Date.now()
     }
-    s.creationStr = fmtDate(new Date(s.creation))
-    s.lastchange = fmtDate(new Date(latest))
+    s.creationStr = fmtDate(s.creation)
+    s.lastchange = fmtDate(latest)
     s.steps = stepList
     s.labbookRaw = text
     s.labbook = marked(text)
@@ -255,10 +264,10 @@ let lastHeartbeat = Date.now()+10000
 
 if(cfg.app.autoQuit) {
   setInterval(function() {
-    if (Date.now()-lastHeartbeat > 5000) {
+    if (Date.now()-lastHeartbeat > 15000) {
       process.exit()
     }
-  }, 2000)
+  }, 3000)
 }
 
 router.post("/*", function(req, res, next) {
@@ -301,8 +310,11 @@ router.get('/:detailSample/:step', function(req, res, next) {
 
   case "add-step":
     args = req.params.step.split("?")[1]
+    date = req.query.date.trim()
     name = req.query.name.trim()
     description = req.query.description.trim()
+
+    // reformat description properly
     if(description.length > 0) {
       description = "\n" + description
       reg = /\s*\n+(\s*)/g
@@ -315,10 +327,36 @@ router.get('/:detailSample/:step', function(req, res, next) {
     }
     description += '\n\n'
 
+    // parse date and check if passed date is valid
+    if(date) {
+      m = date.match(/(\d+)\.(\d+)/)
+      if(m) {
+        let _date = date.replace(/\d+\.\d+/, m[2]+'.'+m[1])
+        console.log('converted date string to european format '+date+' -> '+_date)
+        date = Date.parse(_date)
+      }
+      else {
+        const d = new Date(Date.now())
+        let _date = d.getMonth()+'.'+d.getDate()+'. '+date
+        console.log('added todays date and month to date string '+date+' -> '+_date)
+        date = Date.parse(_date)
+      }
+    }
+    else {
+      date = Date.now()
+    }
+    if(isNaN(date)) {
+      warnings.push('Failed to parse date, please use a format like: "dd.mm. HH:MM".')
+      break;
+    }
+
+    // check if name length is valid
     if(name.length < 3) {
       warnings.push("Step name must have at least 3 characters")
       break;
     }
+
+    // check if description is free of _ placeholders
     if(req.query.description.match(/_/)) {
       warnings.push("Please fill in all placeholders in step description.")
       break;
@@ -330,7 +368,9 @@ router.get('/:detailSample/:step', function(req, res, next) {
     if(sample.steps.length > 0) {
       nextId = sample.steps[0].id + 1
     }
-    text = "* "+fmtDate()+' '+fmtTime()+' - '+lpad(nextId, cfg.database.stepIdLen)+' - '+name+'\n'+description+'\n'
+    text = "* "+fmtDate(date)+' '+fmtTime(date)
+               +' - '+lpad(nextId, cfg.database.stepIdLen)
+               +' - '+name+'\n'+description+'\n'
     m = /.*\n={3,}\n\n/m.exec(s)
     if(!m) {
       warnings.push("Invalid labbook, cannot save.")
@@ -403,6 +443,7 @@ router.get('/:detailSample*', function(req, res, next) {
       'detailSample': getSampleDetail(req.params.detailSample),
       'nextName': getNextSampleName(),
       'formName': req.query.name,
+      'formDate': req.query.date,
       'formDescription': req.query.description,
       'templates': getAllTemplates(),
       'warnings': warnings,
