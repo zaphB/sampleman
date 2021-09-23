@@ -28,7 +28,7 @@ Download the binaries of the [latest release](https://github.com/zaphB/sampleman
 
 *Having trouble executing?* On a linux machine, make sure the downloaded file has the "execute" permission flag set (usually found in "right-click menu" -> "properties"). On newer MacOs machines it may be very tricky to run the executable, because of the strict code-signing requirements. Maybe it is worth trying to [run from source](#running-from-source).
 
-*The executable for your platform is missing?* Then see how to [run sampleman from the source](#running-from-source)" at the bottom of this readme, or contact me to have your platform to the list.
+*The executable for your platform is missing?* Then see how to [run sampleman from source](#running-from-source) at the bottom of this readme, or contact me to have your platform to the list.
 
 
 ## Quick Configuration
@@ -42,7 +42,7 @@ database:
   samplePrefix: XYZ
   ...
 ```
-The `baseDir` specifies the path, where sampleman will create your sample database. The symbol `~` can be used as shortcut for your user account's home folder, which is usually where Documents, Downloads and such folders are located. Relative paths are interpreted relative to the folder of the sampleman executable.
+The `baseDir` specifies the path, where sampleman will create your sample database. The symbol `~` can be used as shortcut for your user account's home folder, which is usually where Documents, Downloads, Desktop and similar folders are located. Relative paths are interpreted relative to the folder of the sampleman executable.
 
 The `samplePrefix` specifies the prefix that all your sample IDs will get. If it is `ABC`, the sample folders will be named `ABC001`, `ABC002`, etc.
 
