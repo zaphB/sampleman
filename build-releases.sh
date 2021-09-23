@@ -56,7 +56,7 @@ for target in "linux-x64" "win10-x64" "win7-x64" "macos-x64" "macos-arm64"; do
   nodeVersion=""
   if [[ "$target" == "win7-x64" ]]; then
     effTarget="win-x64"
-    nodeVersion="12.22.2"
+    nodeVersion="12.22.6"
   fi
   if [[ "$target" == "win10-x64" ]]; then
     effTarget="win-x64"
@@ -106,6 +106,7 @@ for f in $(ls "releases"); do
     fi
   fi
 done
+echo
 cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
 
 echo "stuffing macos builds into .dmg containers to preserve"
@@ -136,7 +137,7 @@ rmdir "mnt"
 if [[ "$created" == "" ]]; then
   echo "no binaries were created."
 else
-  echo "created $(echo -e "$created" | sed '/^\s*$/d' | wc -l) binaries in ./releases/:"
+  echo "created $(echo -e "$created" | sed '/^\s*$/d' | wc -w) binaries in ./releases/:"
   for cr in $created; do
     echo "> $(ls releases/ | grep -F $cr)"
   done
