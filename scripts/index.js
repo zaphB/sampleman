@@ -123,7 +123,7 @@ function getSampleDetail(name) {
     s.lastchange = fmtDate(latest)
     s.steps = stepList
     s.labbookRaw = text
-    s.labbook = marked(text)
+    s.labbook = marked.parse(text)
     s.isGoodSample = fs.existsSync(path.join(dbDir, name, 'good-sample'))
     s.isBadSample = fs.existsSync(path.join(dbDir, name, 'bad-sample'))
   }
