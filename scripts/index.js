@@ -139,22 +139,25 @@ function escapeRegExp(str) {
 }
 
 function getNextSampleName() {
-  m = []
   samples = getAllSamples()
-  try {
-    i = 0
-    r = RegExp(escapeRegExp(cfg.database.samplePrefix)+'(\\d+)')
-    do {
-      m = r.exec(samples[i] && samples[i++].name)
-    } while(!m && i<samples.length);
+  r = RegExp(escapeRegExp(cfg.database.samplePrefix)+'(\\d+)')
+  let candidate = 1
+  while (true) {
+    let exists = false
+    for (let s in samples) {
+      m = r.exec(samples[s].name)
+      //console.log(m, candidate)
+      if (m && candidate == Number(m[1])) {
+        exists = true
+        break
+      }
+    }
+    if(!exists) {
+      break
+    }
+    candidate += 1
   }
-  catch(err) {
-    console.log(err)
-  }
-  if (!m) {
-    return sanitize(cfg.database.samplePrefix+"001")
-  }
-  return sanitize(cfg.database.samplePrefix+lpad(Number(m[1])+1, 3))
+  return sanitize(cfg.database.samplePrefix+lpad(candidate, 3))
 }
 
 function getAllTemplates() {
@@ -300,10 +303,12 @@ router.get('/:detailSample/:step', function(req, res, next) {
     if(aim != '') {
       aim = ' - '+aim
     }
-    fs.writeFileSync(path.join(dbDir, newName, LABBOOK_FILENAME),
-                     newName + aim + '\n'
-                      + Array(newName.length+aim.length+1).join("=")
-                      + '\n\n');
+    const labbookPath = path.join(dbDir, newName, LABBOOK_FILENAME)
+    if(!fs.existsSync(labbookPath)) {
+      fs.writeFileSync(labbookPath, newName + aim + '\n'
+                        + Array(newName.length+aim.length+1).join("=")
+                        + '\n\n');
+    }
     res.redirect("/"+newName)
     next = function() {}
     break;
