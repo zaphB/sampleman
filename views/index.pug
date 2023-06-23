@@ -170,20 +170,20 @@ block contentright
       h1 #{detailSample.name} - #{detailSample.aim}
 
       div.imagecontainer
-        - let i = 0
-        while i < imgCount
+        - let i = imgsPerPage*(imgPage-1)
+        while i < imgCount && i < imgsPerPage*imgPage
           div.imagetile
             a(href='/'+detailSample.name+'/img?id='+i target='_blanc', style='max-width:inherit')
               img(id="img_"+i, style='max-width:inherit')
             script
-              | fetch('/#{detailSample.name}/img?path&id=#{i}').then(function(response) {
-              |   return response.text()
-              | }).then(function(text) {
-              |   document.getElementById("img_#{i}_caption").innerHTML = "./#{detailSample.name}/"+text
-              |   window.setTimeout(function() {
+              | window.setTimeout(function() {
+              |   fetch('/#{detailSample.name}/img?path&id=#{i}').then(function(response) {
+              |     return response.text()
+              |   }).then(function(text) {
+              |     document.getElementById("img_#{i}_caption").innerHTML = "./#{detailSample.name}/"+text
               |     document.getElementById("img_#{i}").src = '/#{detailSample.name}/img?id=#{i}'
-              |   }, 5*#{i})
-              | })
+              |   })
+              | }, 1000 + 10*#{i})
             p.imagecaption(id="img_"+(i++)+"_caption") ...
 
   else

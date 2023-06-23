@@ -92,10 +92,43 @@ function getSampleDetail(name) {
 
   let s = {}
   try {
-    const text = fs.readFileSync(labbookPath, 'utf8')
+    let text = fs.readFileSync(labbookPath, 'utf8')
+
+    // check whether newlines needed for readability were removed (e.g. by nextcloud)
+    const lines = text.split('\n')
+    let _fixedText = ''
+    let _didFixText = false
+    let indent = 0
+    let isEmptyLine = false
+    let previousIndent = 0
+    for (let i=0; i<lines.length; i++) {
+      const line = lines[i]
+      m = /^(\s*)\S/.exec(line)
+      //console.log(line, m)
+      if(m) {
+        indent = m[1].length
+        isEmptyLine = false
+      }
+      else {
+        indent = 0
+        isEmptyLine = true
+      }
+      //console.log(previousIndent, '->', indent)
+      if (!isEmptyLine && indent < previousIndent) {
+        _didFixText = true
+        _fixedText += '\n'
+      }
+      _fixedText += line+'\n'
+      previousIndent = indent
+    }
+    if (_didFixText) {
+      fs.writeFileSync(labbookPath, _fixedText)
+      text = _fixedText
+    }
+
     let latest = -1
     let stepList = []
-    const r = /^\* (\d{1,2})\.(\d{1,2})\.(\d{4}) (\d{1,2}):(\d{2})\s+-\s+(\d+)\s+-\s+(.*)$/gm
+    const r = /^\* (\d{1,2})\\?\.(\d{1,2})\\?\.(\d{4}) (\d{1,2}):(\d{2})\s+-\s+(\d+)\s+-\s+(.*)$/gm
     while(m = r.exec(text)) {
       const timestamp = new Date(m[3], m[2]-1, m[1], m[4], m[5]).valueOf()
       const id = Number(m[6])
@@ -321,16 +354,25 @@ router.get('/:detailSample/:step', function(req, res, next) {
 
     // reformat description properly
     if(description.length > 0) {
-      description = "\n" + description
+      description = '\n' + description
       reg = /\s*\n+(\s*)/g
+      let minIndentLevel = 9999
+
+      // find min indentation
+      while(m = reg.exec(description)) {
+        minIndentLevel = Math.min(minIndentLevel, Math.floor(m[1].length/2)+1);
+      }
+
+      // typeset indentation
       while(m = reg.exec(description)) {
         description = description.substr(0,m.index)
-            + "\n" + Array(Math.floor(m[1].length/2)+1).join("  ") + "  * "
+            + '\n' + Array(Math.floor(m[1].length/2)+1-minIndentLevel)
+                                                  .join('  ') + '  * '
             + description.substr(m.index+m[0].length)
       }
       description = description.substr(1)
     }
-    description += '\n\n'
+    description += '\n'
 
     // parse date and check if passed date is valid
     if(date) {
@@ -376,10 +418,13 @@ router.get('/:detailSample/:step', function(req, res, next) {
     text = "* "+fmtDate(date)+' '+fmtTime(date)
                +' - '+lpad(nextId, cfg.database.stepIdLen)
                +' - '+name+'\n'+description+'\n'
-    m = /.*\n={3,}\n\n/m.exec(s)
+    m = /.*\n={3,}\n+/m.exec(s)
     if(!m) {
-      warnings.push("Invalid labbook, cannot save.")
-      break;
+      m = /^#.*\n+/m.exec(s)
+      if(!m) {
+        warnings.push("Invalid labbook, cannot save.")
+        break;
+      }
     }
     pos = m.index + m[0].length
     newLabbook = s.substr(0,pos) + text + s.substr(pos)
@@ -449,6 +494,8 @@ router.get('/:detailSample*', function(req, res, next) {
       'nextName': getNextSampleName(),
       'formName': req.query.name,
       'formDate': req.query.date,
+      'imgsPerPage': req.query.imgsPerPage || 50,
+      'imgPage': req.query.imgPage || 1,
       'formDescription': req.query.description,
       'templates': getAllTemplates(),
       'warnings': warnings,
