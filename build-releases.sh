@@ -68,7 +68,7 @@ for target in "linux-x64" "win10-x64" "win7-x64" "macos-x64" "macos-arm64"; do
     echo "const s = require('semver-sort'); \
           console.log(s.desc(process.argv.slice(2))[0])" >.tmp-script.js
     nodeVersion="$(node .tmp-script.js $(curl "https://github.com/vercel/pkg-fetch/releases" 2>/dev/null \
-                    | grep -oP '\d+\.\d+\.\d+-'"$effTarget" | grep -oP '\d+\.\d+\.\d+'))"
+                    | grep -oP 'v\d+\.\d+\.\d+-'"$effTarget" | grep -oP '\d+\.\d+\.\d+'))"
     rm .tmp-script.js
   fi
 
