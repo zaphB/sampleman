@@ -47,20 +47,12 @@ echo "> node --version is v$(node --version | grep -oP '\d+\.\d+\.\d+')"
 echo
 
 # build targets
-for target in "linux-x64" "win10-x64" "win7-x64" "macos-x64" "macos-arm64"; do
+for target in "linux-x64" "win-x64" "macos-x64" "macos-arm64"; do
 
   echo "begin building target $target..."
 
-  # mangling win7 and win10 targets
   effTarget="$target"
-  nodeVersion=""
-  if [[ "$target" == "win7-x64" ]]; then
-    effTarget="win-x64"
-    nodeVersion="12.22.6"
-  fi
-  if [[ "$target" == "win10-x64" ]]; then
-    effTarget="win-x64"
-  fi
+  nodeVersion="18.5.0" # enforce 18.5.0 for compability with node-lts-hydrogen 
 
   # check latest nodejs prebuilt binary version if none is set yet
   if [[ "$nodeVersion" == "" ]]; then
