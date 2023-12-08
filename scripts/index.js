@@ -174,22 +174,19 @@ function escapeRegExp(str) {
 function getNextSampleName() {
   samples = getAllSamples()
   r = RegExp(escapeRegExp(cfg.database.samplePrefix)+'(\\d+)')
-  let candidate = 1
-  while (true) {
-    let exists = false
-    for (let s in samples) {
-      m = r.exec(samples[s].name)
-      //console.log(m, candidate)
-      if (m && candidate == Number(m[1])) {
-        exists = true
-        break
-      }
+
+  // set first candidate to largest found sample number in db
+  let candidate = 0
+  for (let s in samples) {
+    m = r.exec(samples[s].name)
+    if (m) {
+      candidate = Math.max(candidate, Number(m[1]))
     }
-    if(!exists) {
-      break
-    }
-    candidate += 1
   }
+  // increment candidate by one
+  candidate += 1
+
+  // return sanitized candidate
   return sanitize(cfg.database.samplePrefix+lpad(candidate, 3))
 }
 
