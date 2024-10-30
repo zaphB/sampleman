@@ -1,11 +1,13 @@
-const express = require('express');
-const fs = require('fs');
-const fse = require('fs-extra');
-const marked = require('marked');
-const multer = require('multer');
-const os = require('os');
+import * as express from 'express'
+import * as fs from 'fs'
+import * as fse from 'fs-extra'
+import * as marked from 'marked'
+import path from 'path'
+import multer from 'multer'
+import * as os from 'os'
 
-const cfg = require('./config');
+import {default as cfg, absolutePath} from './config.js'
+cfg.absolutePath = absolutePath
 
 const upload = multer({dest: os.tmpdir()})
 const router = express.Router();
@@ -18,7 +20,7 @@ const LABBOOK_FILENAME = 'labbook.md'
 const IMG_FORMATS = ['jpg', 'jpeg', 'png', 'gif']
 
 function lpad(int, len, char="0") {
-  res = String(int)
+  let res = String(int)
   for(let i=1; i<len; i++) {
     if(int < Math.pow(10, i)) {
       res = char + res
@@ -48,10 +50,10 @@ function fmtTime(d) {
 }
 
 function getAllSamples() {
-  samples = []
+  var samples = []
   if(fs.existsSync(dbDir)) {
     fs.readdirSync(dbDir).forEach(dir => {
-      s = getSampleDetail(dir)
+      var s = getSampleDetail(dir)
       if(s) {
         samples.push(s)
       }
@@ -172,13 +174,13 @@ function escapeRegExp(str) {
 }
 
 function getNextSampleName() {
-  samples = getAllSamples()
-  r = RegExp(escapeRegExp(cfg.database.samplePrefix)+'(\\d+)')
+  let samples = getAllSamples()
+  let r = RegExp(escapeRegExp(cfg.database.samplePrefix)+'(\\d+)')
 
   // set first candidate to largest found sample number in db
   let candidate = 0
   for (let s in samples) {
-    m = r.exec(samples[s].name)
+    let m = r.exec(samples[s].name)
     if (m) {
       candidate = Math.max(candidate, Number(m[1]))
     }
@@ -205,7 +207,6 @@ function getAllTemplates() {
 
 function getTemplate(name) {
   name = sanitize(name)
-  templates = []
   try {
     text = fs.readFileSync(dbDir+'/templates/'+name+'.txt', 'utf8').split('\n')
     if(text.length == 1) {
@@ -225,7 +226,7 @@ function getTemplate(name) {
 }
 
 function fileOrDirExists(path, regex) {
-  m = [null]
+  let m = [null]
   fs.readdirSync(path).some(file => {
     m[0] = file.match(regex)
     if(m[0]) {
@@ -504,7 +505,7 @@ router.get('/:detailSample*', function(req, res, next) {
 });
 
 router.get('/', function(req, res, next) {
-  s = getAllSamples()
+  var s = getAllSamples()
   if(s.length > 0) {
     res.redirect('/'+sanitize(s[0].name))
   }
@@ -521,20 +522,20 @@ router.post('/:detailSample/',
   const imgCountBefore = findImgs(req.params.detailSample).length
   if(ups || req.body.useuploadfolder) {
 
-    basePath = path.join(dbDir, sanitize(req.params.detailSample))
-    stepid = req.body.stepid
+    var basePath = path.join(dbDir, sanitize(req.params.detailSample))
+    var stepid = req.body.stepid
 
-    detail = getSampleDetail(req.params.detailSample)
+    var detail = getSampleDetail(req.params.detailSample)
     if(stepid <= 0 || stepid != Number(stepid).toFixed(0)) {
       stepid = detail.steps[0].id
     }
 
-    dir = fileOrDirExists(basePath, RegExp("^"+lpad(stepid, cfg.databasegstepIdLen)+".*$"))
+    var dir = fileOrDirExists(basePath, RegExp("^"+lpad(stepid, cfg.databasegstepIdLen)+".*$"))
     if(!dir) {
-      step = detail.steps.find(function(t) {return t.id == Number(stepid)})
-      w = step.title.split(" ")
-      shortTitle = ""
-      maxLen = 0
+      var step = detail.steps.find(function(t) {return t.id == Number(stepid)})
+      var w = step.title.split(" ")
+      var shortTitle = ""
+      var maxLen = 0
       for(let i=0; i<w.length; i++) {
         if(w[i].length > maxLen) {
           maxLen = w[i].length
@@ -588,4 +589,5 @@ router.post('/:detailSample/',
   })
 })
 
-module.exports = router;
+export default router 
+

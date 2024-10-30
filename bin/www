@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 
-const http = require('http');
-const open = require('open');
-const os = require('os');
+import http from 'http'
+import open from 'open'
+import os from 'os'
 
-const app = require('../scripts/app');
-const cfg = require('../scripts/config');
+import app from '../scripts/app.js'
+import cfg from '../scripts/config.js'
 
 const host = cfg.http.public ? '::' : 'localhost';
 const port = cfg.http.port;

@@ -1,10 +1,13 @@
-fs = require('fs')
-fse = require('fs-extra')
-path = require('path')
-const os = require('os');
-deepmerge = require('deepmerge')
-YAML = require('yaml')
+import * as fs from 'fs'
+import * as fse from 'fs-extra'
+import * as path from 'path'
+import * as os from 'os'
+import deepmerge from 'deepmerge'
+import * as YAML from 'yaml'
+import { fileURLToPath } from 'url';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const BASE_PATH = writablePath([path.join(__dirname, '..'),
                                 process.execPath])
 
@@ -88,7 +91,7 @@ catch(e) {
 config = deepmerge(DEFAULT_CFG, config)
 fs.writeFileSync(CONFIG_PATH, YAML.stringify(config, 'utf8'))
 
-module.exports = {
-  ...config,
-  'absolutePath': absolutePath
+export default config
+export {
+  absolutePath
 }
