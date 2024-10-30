@@ -103,6 +103,7 @@ function getSampleDetail(name) {
     let indent = 0
     let isEmptyLine = false
     let previousIndent = 0
+    let m = undefined;
     for (let i=0; i<lines.length; i++) {
       const line = lines[i]
       m = /^(\s*)\S/.exec(line)
@@ -208,7 +209,7 @@ function getAllTemplates() {
 function getTemplate(name) {
   name = sanitize(name)
   try {
-    text = fs.readFileSync(dbDir+'/templates/'+name+'.txt', 'utf8').split('\n')
+    let text = fs.readFileSync(dbDir+'/templates/'+name+'.txt', 'utf8').split('\n')
     if(text.length == 1) {
       text[1] = ""
     }
@@ -221,6 +222,7 @@ function getTemplate(name) {
     return {name: text[0], description: text.slice(i).join("\n")}
   }
   catch(err) {
+    console.log(err)
     return {name: "", description: ""}
   }
 }
@@ -328,7 +330,7 @@ router.get('/:detailSample/:step', function(req, res, next) {
 
   switch(req.params.step) {
   case "create-sample":
-    newName = getNextSampleName()
+    let newName = getNextSampleName()
     fse.mkdirpSync(path.join(dbDir, newName));
     let aim = req.query.aim.trim()
     if(aim != '') {
@@ -345,18 +347,19 @@ router.get('/:detailSample/:step', function(req, res, next) {
     break;
 
   case "add-step":
-    args = req.params.step.split("?")[1]
-    date = req.query.date.trim()
-    name = req.query.name.trim()
-    description = req.query.description.trim()
+    let args = req.params.step.split("?")[1]
+    let date = req.query.date.trim()
+    let name = req.query.name.trim()
+    let description = req.query.description.trim()
 
     // reformat description properly
     if(description.length > 0) {
       description = '\n' + description
-      reg = /\s*\n+(\s*)/g
+      let reg = /\s*\n+(\s*)/g
       let minIndentLevel = 9999
 
       // find min indentation
+      let m = undefined
       while(m = reg.exec(description)) {
         minIndentLevel = Math.min(minIndentLevel, Math.floor(m[1].length/2)+1);
       }
@@ -406,17 +409,17 @@ router.get('/:detailSample/:step', function(req, res, next) {
       warnings.push("Please fill in all placeholders in step description.")
       break;
     }
-    sample = getSampleDetail(req.params.detailSample)
+    let sample = getSampleDetail(req.params.detailSample)
 
-    s = sample.labbookRaw
+    let s = sample.labbookRaw
     let nextId = 1
     if(sample.steps.length > 0) {
       nextId = sample.steps[0].id + 1
     }
-    text = "* "+fmtDate(date)+' '+fmtTime(date)
+    let text = "* "+fmtDate(date)+' '+fmtTime(date)
                +' - '+lpad(nextId, cfg.database.stepIdLen)
                +' - '+name+'\n'+description+'\n'
-    m = /.*\n={3,}\n+/m.exec(s)
+    let m = /.*\n={3,}\n+/m.exec(s)
     if(!m) {
       m = /^#.*\n+/m.exec(s)
       if(!m) {
@@ -424,15 +427,15 @@ router.get('/:detailSample/:step', function(req, res, next) {
         break;
       }
     }
-    pos = m.index + m[0].length
-    newLabbook = s.substr(0,pos) + text + s.substr(pos)
+    let pos = m.index + m[0].length
+    let newLabbook = s.substr(0,pos) + text + s.substr(pos)
     fs.writeFileSync(dbDir+'/'+sanitize(req.params.detailSample)+'/labbook.md',
                      newLabbook)
     res.redirect("/"+sanitize(req.params.detailSample))
     next = function() {}
 
   case "load-template":
-    t = getTemplate(req.query['temp-name'])
+    let t = getTemplate(req.query['temp-name'])
     if(t.name) {
       res.redirect("/"+sanitize(req.params.detailSample)
           +'?name='+encodeURIComponent(t.name)
@@ -441,7 +444,7 @@ router.get('/:detailSample/:step', function(req, res, next) {
     }
 
   case "import-files":
-    stepid = Number(req.query.stepid)
+    let stepid = Number(req.query.stepid)
     break
 
   case "upload-form":
@@ -453,8 +456,8 @@ router.get('/:detailSample/:step', function(req, res, next) {
     break;
 
   case "img":
-    imgNum = (Number(req.query.id) || Number(0)).toFixed(0)
-    imgs = findImgs(req.params.detailSample)
+    let imgNum = (Number(req.query.id) || Number(0)).toFixed(0)
+    let imgs = findImgs(req.params.detailSample)
     if(imgNum < imgs.length) {
       if(req.query.path != undefined) {
         res.status(200).send(imgs[imgNum].replace(dbDir+'/'+req.params.detailSample, '').slice(1))
