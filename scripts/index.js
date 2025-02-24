@@ -1,6 +1,6 @@
 import * as express from 'express'
 import * as fs from 'fs'
-import * as fse from 'fs-extra'
+import fse from 'fs-extra'
 import * as marked from 'marked'
 import path from 'path'
 import multer from 'multer'
@@ -118,8 +118,8 @@ function getSampleDetail(name) {
       }
       //console.log(previousIndent, '->', indent)
       if (!isEmptyLine && indent < previousIndent) {
-        _didFixText = true
-        _fixedText += '\n'
+        //_didFixText = true
+        //_fixedText += '\n'
       }
       _fixedText += line+'\n'
       previousIndent = indent
@@ -572,7 +572,7 @@ router.post('/:detailSample/',
       }
       if(uploadDir) {
         fse.mkdirpSync(uploadDir)
-        files = fs.readdirSync(uploadDir).sort()
+        let files = fs.readdirSync(uploadDir).sort()
         for(let i=0; i<files.length && i<count; i++) {
           const tarPath = makeNonExistingPath(path.join(basePath, dir, files[i]))
           fse.moveSync(path.join(uploadDir, files[i]), tarPath)
@@ -593,4 +593,3 @@ router.post('/:detailSample/',
 })
 
 export default router 
-
